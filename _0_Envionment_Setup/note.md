@@ -705,14 +705,145 @@
 
 
 > 
+> 前提：计算机用户名为英文，我的是"`zqc`"
 > 
 > 
 > 
+> <font color="gree"> 1. 修改工作路径 </font>
+> 
+> > `Jupyter` 初始的工作路径为`【C:\Users\用户名】`，需要进行修正，将其转移到新建的`【D:\Jupyter】`位置。
+> > 
+> > ① 新建 D:\Jupyter；
+> > 
+> > <div align=center>
+> > <img src="./images/Jupyter_1.png"  style="zoom:100%"/>
+> > </div> 
+> >   
+> > ② 打开桌面快捷方式中的 Anaconda Prompt (Anaconda)；
+> > 
+> > ③ 输入 jupyter notebook --generate-config 命令并执行；
+> > 
+> > <div align=center>
+> > <img src="./images/Jupyter_2.png"  style="zoom:100%"/>
+> > </div> 
+> >   
+> > ④ 打开上一步生成的配置文件地址，即`C:\Users\zqc\.jupyter`
+> > 
+> > <div align=center>
+> > <img src="./images/Jupyter_3.png"  style="zoom:100%"/>
+> > </div> 
+> > 
+> > ⑤ 在 `jupyter_notebook_config.py`（以记事本方式打开）中使用 `Ctrl + F` 查找
+并且修改如下配置项：
+> > 
+> > ```html
+> > 修改前：# c.NotebookApp.notebook_dir = ''
+> > 
+> > 修改后：c.NotebookApp.notebook_dir = 'D:\Jupyter'
+> > ```
+> > 
+> > > 也即删除前面的`#`号注释，在后面的单引号里输入要设置的目录路径，注意，
+`'D:\Jupyter'` 中不能有空格，否则 `Jupyter` 打开就闪退。保存后关闭。
+> > 
+> > <div align=center>
+> > <img src="./images/Jupyter_4.png"  style="zoom:100%"/>
+> > <img src="./images/Jupyter_5.png"  style="zoom:100%"/>
+> > </div> 
+> > 
+> > 
+> > ⑥ 找到桌面的 jupyter notebook 快捷图标，鼠标右键>>属性>>快捷方式>>目标，删除最后的`"%USERPROFILE%/"`。
+> > 
+> > <div align=center>
+> > <img src="./images/Jupyter_6.png"  style="zoom:100%"/>
+> > </div> 
+> >  
+>
+> <font color="yellow"> 这样，以后每次在 `D:\Jupyter` 进行修改，都会同步显示在 `Jupyter` 中 </font>
+> 
+> > 
+> > <div align=center>
+> > <img src="./images/Jupyter_7.png"  style="zoom:100%"/>
+> > </div> 
+> >  
+>
 > 
 > 
+> <font color="gree"> 2. 修改默认字体 </font>
+>  
+> > ① 打开如下地址
+> > 
+> > ```html
+> > D:\Anaconda\Lib\site-packages\notebook\static\components\codemirror\lib
+> > ```
+> > 
+> > <div align=center>
+> > <img src="./images/Jupyter_8.png"  style="zoom:100%"/>
+> > </div> 
+> >  
+> > ② 打开 `codemirror.css`` 文件；
+> > 
+> > 默认字体为`monospace`, 我们进行修改
+> > 
+> > ③ Ctrl+F，搜索“`font-family: monospace;`”的文字，并将其改为
+> > 
+> > ```html
+> > font-family: 'Fira Code Light','Consolas';
+> > ```
+> > 
 > 
 > 
+> <font color="gree"> 3. 虚拟环境连接 Jupyter </font>
+>  
+> > <div align=center>
+> > <img src="./images/Jupyter_9.png"  style="zoom:100%"/>
+> > </div> 
+> > 
+> > 我们已经在 `Anaconda` 里创建了一个叫 `DL` 的虚拟环境，但是现在这个叫 `DL` 的虚拟环境没有连接 `Jupyter`，换句话说，`Jupyter` 现在仅仅能与 `base`` 环境相连。
+> > 
+> > 为让虚拟环境与 `Jupyter` 相连，请在 `Anaconda Prompt` 的虚拟环境下操作下列命令。
+> > 
+> > ```sh
+> > # 安装 ipykernel
+> > pip install ipykernel -i https://pypi.tuna.tsinghua.edu.cn/simple
+> > 
+> > # 将虚拟环境导入 Jupyter 的 kernel 中
+> > python -m ipykernel install --user --name=环境名
+> > 
+> > # 删除虚拟环境的 kernel 内核
+> > jupyter kernelspec remove 环境名
+> > ```
+> > 
+> > 实际操作如下
+> > 
+> > ```sh
+> > # 进入名为“DL”的虚拟环境
+> > conda activate DL
+> > 
+> > # 安装 ipykernel
+> > pip install ipykernel -i https://pypi.tuna.tsinghua.edu.cn/simple
+> > 
+> > # 将虚拟环境 DL 导入 Jupyter 的 kernel 中
+> > python -m ipykernel install --user --name=DL
+> > 
+> > # 退出虚拟环境
+> > conda deactivate
+> > ```
+> > 
+> > <div align=center>
+> > <img src="./images/Jupyter_10.png"  style="zoom:100%"/>
+> > <img src="./images/Jupyter_11.png"  style="zoom:100%"/>
+> > </div> 
+> > 
+>
+> <font color="yellow"> 
 > 
+> 我们使用 `New` 创建的脚本后缀为 `.ipynb`，全称 `.ipython notebook`，即 `.Jupyter Notebook`
+>
+> 相对于 `.py`，唯一的区别是 `.ipynb` 可以对代码进行分块
+>
+> 我们在 `Jupyter` 中可以对代码块进行剪辑
+>
+> </font>
 > 
 > 
 
@@ -720,17 +851,90 @@
 
 ### 五. 安装 PyCharm
 
+>
+> 1. 安装
+> 
+> > <div align=center>
+> > <img src="./images/Pycharm_1.png"  style="zoom:100%"/>
+> > <img src="./images/Pycharm_2.png"  style="zoom:100%"/>
+> > <img src="./images/Pycharm_3.png"  style="zoom:100%"/>
+> > <img src="./images/Pycharm_4.png"  style="zoom:100%"/>
+> > <img src="./images/Pycharm_5.png"  style="zoom:100%"/> 
+> > </div> 
 > 
 > 
+> 2. 虚拟环境连接 PyCharm
 > 
-> 
-> 
-> 
-> 
-> 
-> 
-> 
-> 
+> > 
+> > 首先在 `D:\PyCharm` 中创建文件夹 `Py_Projects` 存放工程。
+> > 
+> > <div align=center>
+> > <img src="./images/Pycharm_6.png"  style="zoom:100%"/>
+> > </div> 
+> > 
+> > 接着，在 PyCharm 里创建新工程，如图所示。
+> > 
+> > <div align=center>
+> > <img src="./images/Pycharm_7.png"  style="zoom:100%"/>
+> > </div> 
+> > 
+> > 第一步，切换新工程的位置为刚刚创建的文件夹；
+> > 
+> > 第二步，点击“`Existing interpreter`”；
+> > 
+> > 第三步，由于是第一次进入 PyCharm，只能点击“`…`”来找解释器。
+> > 
+> > <div align=center>
+> > <img src="./images/Pycharm_8.png"  style="zoom:100%"/>
+> > </div> 
+> > 
+> > 在弹出的界面中，首先点击左侧的 conda 环境，再将解释器设置为 Anaconda 虚拟环境解释器的地址，如图所示
+> > 
+> > <div align=center>
+> > <img src="./images/Pycharm_9.png"  style="zoom:100%"/>
+> > <img src="./images/Pycharm_10.png"  style="zoom:100%"/>
+> > </div> 
+> > 
+> > 第一次进入工程页面，连接 Anaconda 需要一段时间（3 分钟是有的），点击右下角蓝色小圈圈可查看进度，如图所示。
+> > 
+> > <div align=center>
+> > <img src="./images/Pycharm_11.png"  style="zoom:100%"/>
+> > </div> 
+> > 
+> > 更新好之后，我们可以把 PyCharm 设置为中文。File——Settings——Plugins
+> > 
+> > 在搜索框输入 Chinese——安装第二个。
+> > 
+> > <div align=center>
+> > <img src="./images/Pycharm_12.png"  style="zoom:100%"/>
+> > </div> 
+> > 
+> > 下载好后，点击 Restart IDE，即重启 PyCharm，重启后，会发现软件已经变成了简体中文，但要第二次更新配置，但这一次更新速度会极快。
+> > 
+> > <font color="yellow"> 版本低的IDE可能会无法安装汉化包</font>
+> > 
+> > 现在，在此工程里创建一个名为“test”的 `.py` 文件，如图所示。
+> > 
+> > 
+> > <div align=center>
+> > <img src="./images/Pycharm_13.png"  style="zoom:100%"/>
+> > </div> 
+> > 
+> > 
+> > 点击 编辑配置`Edit Configurations`,勾选 “使用 Python 控制台运行” `Run with Python Console`，并应用`Apply`
+> > 
+> > <div align=center>
+> > <img src="./images/Pycharm_14.png"  style="zoom:100%"/>
+> > <img src="./images/Pycharm_15.png"  style="zoom:100%"/>
+> > </div> 
+> > 
+> > `Ctrl+Shift+F10` 运行`.py` 文件，控制台右侧即可显示每个变量的数值。
+> > 
+> > <div align=center>
+> > <img src="./images/Pycharm_16.png"  style="zoom:100%"/>
+> > </div> 
+> > 
+> > 
 > 
 
 
