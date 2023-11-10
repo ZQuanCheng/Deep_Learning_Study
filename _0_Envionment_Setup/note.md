@@ -96,7 +96,7 @@
 
 
 
-#### 1.3 下载torch、torchaudio、torchvision
+#### 1.3 下载torch、torchaudio、torchvision（后续不使用命令安装Pytorch GPU版）
 
 > 
 > 官网：https://download.pytorch.org/whl/
@@ -442,19 +442,70 @@
 > 
 
 
-#### 3.3 创建虚拟环境
+
+
+#### 3.3 安装显卡内 CUDA 的 cuDNN 加速库（非必要, 没做）
+
+> 
+> 官方下载地址：https://developer.nvidia.com/rdp/cudnn-archive
+> 
+> `cuDNN` 的全称为 `NVIDIA CUDA® Deep Neural Network library`，是 `NVIDIA` 专门针对深度神经网络（`Deep Neural Networks`）中的基础操作而设计基于 `GPU` 的加速库
+> 
+> 
+
+
+
+
+#### 3.4 创建虚拟环境
 
 > 
 > 
 > 
+> ```sh
+> # 列出所有的环境
+> conda env list
+> 
+> # 创建名为“DL”的虚拟环境，并指定 Python 的版本
+> conda create -n DL python=3.9
+> 
+> # 查看是否创建成功
+> conda env list
+> 
+> # 进入名为“DL”的虚拟环境
+> conda activate DL
+> ```
+> 
+> > 
+> > 虚拟环境内的操作
+> > 
+> > ```sh
+> > # 列出当前环境下的所有库
+> > conda list
+> > 
+> > # 安装 NumPy 库，并指定版本 1.21.5
+> > pip install numpy==1.21.5 -i https://pypi.tuna.tsinghua.edu.cn/simple
+> > 
+> > # 安装 Pandas 库，并指定版本 1.2.4
+> > pip install Pandas==1.2.4 -i https://pypi.tuna.tsinghua.edu.cn/simple
+> > 
+> > # 安装 Matplotlib 库，并指定版本 3.5.1
+> > pip install Matplotlib==3.5.1 -i https://pypi.tuna.tsinghua.edu.cn/simple
+> > 
+> > # 查看当前环境下某个库的版本（以 numpy 为例）
+> > pip show numpy
+> > 
+> > # 退出虚拟环境
+> > conda deactivate
+> > ```
+> > 
 > 
 > 
-> 
 
 
 
-#### 3.4 安装Pytorch（GPU版）
+#### 3.5 安装Pytorch（GPU版）
 
+> 说明如下：
 > 
 > > `PyTorch` 一分为三：`torch`、`torchvision` 与 `torchaudio`。
 > > 
@@ -464,10 +515,199 @@
 > > 
 > > 安装 `torch` 前，先给出一张安装表，其中 `cu113` 即 `cuda 11.3`，`cp39` 即 `Python` 解释器的版本是 `Python3.9`。注：`NVIDIA` 显卡 `30` 系列（如 `NVIDIA GeForce RTX 3050`）只能安装 `cu110` 及其以后的版本。
 > > 
-> 
+> > 
 > > <div align=center>
 > > <img src="./images/torch_1.png"  style="zoom:100%"/>
 > > </div> 
+> > 
+> > 根据表 5-1，`torch 1.12.0` 支持的 `cuda` 是 `11.3` 或 `11.6`，任意选一个即可；其支持的 `Python` 是 `3.7 - 3.10`，刚刚新建的虚拟环境的 `Python` 是 `3.9`，满足条件。
+> > 
+> > <font color="pink">由于`显卡内 CUDA`为`11.3`，`torch cuda`不能选更高的版本，这里只能`cuda 11.3`</font> 
+> > 
+> > 
+> 
+> https://pytorch.org/get-started/previous-versions/
+> 
+> 
+> > <div align=center>
+> > <img src="./images/torch_2.png"  style="zoom:100%"/>
+> > <img src="./images/torch_3.png"  style="zoom:100%"/>
+> > </div> 
+> 
+> 
+> <font color="gree">请注意，这里使用 `pip` 安装，而不是 `conda` 安装（如果用 `conda` 安装，最后检验 `cuda` 时是不可用的）</font> 
+>
+> 
+> 
+> <font color="yellow">（1）方法一：直接安装（不建议，网差的话会死机）</font> 
+> 
+> > ```sh
+> > # 列出所有的环境
+> > conda env list
+> > 
+> > # 进入名为“DL”的虚拟环境
+> > conda activate DL
+> > ```
+> > 
+> > 
+> > 虚拟环境内的操作
+> > 
+> > ```sh
+> > # 列出当前环境下的所有库
+> > conda list
+> > 
+> > # 安装torch v1.12.0 CUDA 11.3 版 
+> > pip install torch==1.12.0+cu113 torchvision==0.13.0+cu113 torchaudio==0.12.0 --extra-index-url https://download.pytorch.org/whl/cu113
+> > 
+> > # 退出虚拟环境
+> > conda deactivate
+> > ```
+> > 
+> > 看到最后几行代码里有 `Successfully installed` 就算成功。
+> > 
+> > 安装命令的意思是，使用 `pip` 安装三个库，
+> > 
+> > 第一库是 `torch==1.12.0+cu113`，
+> > 
+> > 第二个库是 `torchvision==0.13.0+cu113`，
+> > 
+> > 第三个库是 `torchaudio==0.12.0`，
+> > 
+> > 库的下载地址是 https://download.pytorch.org/whl/cu113。
+> > 
+>
+> 
+> 
+> <font color="yellow">（2）方法二：先下whl文件（wheel 轮子）再安装 </font> 
+>
+> 
+> > <div align=center>
+> > <img src="./images/torch_4.png"  style="zoom:100%"/>
+> > </div> 
+> > 
+> > 下载好后，将三个 `whl` 文件放在新建的 `D:\whl` 文件夹中（安装完不要删，建议留着，之后可能还要安装）。
+> > 
+> > <div align=center>
+> > <img src="./images/torch_5.png"  style="zoom:100%"/>
+> > </div> 
+> > 
+> > 安装命令为 `pip install 路径\轮子名.whl`，即
+> > 
+> > ```sh
+> > pip install D:\whl\torch-1.12.0+cu113-cp39-cp39-win_amd64.whl
+> > 
+> > pip install D:\whl\torchaudio-0.12.0+cu113-cp39-cp39-win_amd64.whl
+> > 
+> > pip install D:\whl\torchvision-0.13.0+cu113-cp39-cp39-win_amd64.whl
+> > ```
+> > 
+> > <font color="gree">进入虚拟环境</font> 
+> > 
+> > ```sh
+> > # 列出所有的环境
+> > conda env list
+> > 
+> > # 进入名为“DL”的虚拟环境
+> > conda activate DL
+> > ```
+> > 
+> > 
+> > <font color="gree">虚拟环境内的操作</font> 
+> > 
+> > ```sh
+> > # 列出当前环境下的所有库
+> > conda list
+> > 
+> > # 安装torch v1.12.0 CUDA 11.3 版 
+> > pip install D:\whl\torch-1.12.0+cu113-cp39-cp39-win_amd64.whl
+> > pip install D:\whl\torchaudio-0.12.0+cu113-cp39-cp39-win_amd64.whl
+> > pip install D:\whl\torchvision-0.13.0+cu113-cp39-cp39-win_amd64.whl
+> > 
+> > # 退出虚拟环境
+> > conda deactivate
+> > ```
+> > 
+> > 
+> > <div align=center>
+> > <img src="./images/torch_6.png"  style="zoom:100%"/>
+> > </div> 
+> >  
+>
+> 
+> 
+
+#### 3.6 检验 cuda 是否可用
+
+
+> 
+> 
+> <font color="yellow"> 方法一：查看当前环境的所有库 </font> 
+>
+> > 进入 DL 环境后，使用 `conda list` 命令列出当前的所有库，如图。
+> > 
+> > <div align=center>
+> > <img src="./images/torch_7.png"  style="zoom:100%"/>
+> > </div> 
+> >  
+> 
+> 
+> <font color="yellow"> 方法二：进入 Python 解释器检验 </font> 
+>
+> > 
+> > <font color="gree">虚拟环境内的操作</font> 
+> > 
+> > ```sh
+> > # 输入 python 以进入解释器
+> > python
+> > 
+> > # 输入 import torch 导入 torch 库
+> > import torch
+> > # 若 torch 安装失败，则会返回 No module named ‘torch’。
+> > # 若安装成功，不会返回任何语句，同时在下一行出现“>>>”，提示我们可以继续敲代码。
+> > 
+> > # 输入 torch.cuda.is_available()
+> > torch.cuda.is_available()
+> > ```
+> > 
+> > <div align=center>
+> > <img src="./images/torch_8.png"  style="zoom:100%"/>
+> > </div> 
+> >  
+> 
+> 
+> <font color="yellow"> 方法三：虚拟环境连接 Jupyter 执行以下命令 </font> 
+> 
+> > 
+> > ```sh
+> > import torch
+> > 
+> > torch.cuda.is_available()
+> > ```
+> > 
+> 
+> <font color="yellow"> 方法四：虚拟环境连接 PyCharm 执行上述命令 </font> 
+> 
+> > 
+> > ```sh
+> > import torch
+> > 
+> > torch.cuda.is_available()
+> > ```
+> > 
+> 
+> 
+> 
+
+
+
+
+### 四. Jupyter 代码编辑器
+
+
+> 
+> 
+> 
+> 
 > 
 > 
 > 
@@ -478,6 +718,20 @@
 
 
 
+### 五. 安装 PyCharm
+
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
 
 
 
