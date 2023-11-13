@@ -745,7 +745,7 @@
 > 
 > > `Jupyter` 初始的工作路径为`【C:\Users\用户名】`，需要进行修正，将其转移到新建的`【D:\Jupyter】`位置。
 > > 
-> > ① 新建 D:\Jupyter；
+> > ① 新建 `D:\Jupyter`；
 > > 
 > > <div align=center>
 > > <img src="./images/Jupyter_1.png"  style="zoom:100%"/>
@@ -753,7 +753,7 @@
 > >   
 > > ② 打开桌面快捷方式中的 Anaconda Prompt (Anaconda)；
 > > 
-> > ③ 输入 jupyter notebook --generate-config 命令并执行；
+> > ③ 输入 `jupyter notebook --generate-config` 命令并执行；
 > > 
 > > <div align=center>
 > > <img src="./images/Jupyter_2.png"  style="zoom:100%"/>
@@ -878,6 +878,24 @@
 > </font>
 > 
 > 
+
+
+
+#### 如果闪退咋么办
+
+>
+> https://blog.csdn.net/xiaobin_23134/article/details/133499644
+>
+> https://github.com/microsoft/azuredatastudio/issues/24436
+>
+> ```sh
+> pip uninstall traitlets
+> 
+> pip install traitlets==5.9.0
+> ```
+> 
+
+
 
 
 
