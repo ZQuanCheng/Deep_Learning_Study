@@ -451,6 +451,9 @@
 > 
 > `cuDNN` 的全称为 `NVIDIA CUDA® Deep Neural Network library`，是 `NVIDIA` 专门针对深度神经网络（`Deep Neural Networks`）中的基础操作而设计基于 `GPU` 的加速库
 > 
+>
+> <font color="yellow">如果您是通过特定的深度学习框架安装的（如 `TensorFlow` 或 `PyTorch` 的某些版本），`cuDNN` 可能会被包含在框架的安装包中，而不需要单独安装。在这种情况下，`cuDNN` 会被安装在框架的目录结构中，而不是在 `CUDA Toolkit` 的目录下。</font> 
+> 
 > 
 
 
@@ -503,8 +506,10 @@
 
 
 
-#### 3.5 安装Pytorch（GPU版）
 
+
+
+#### 3.5 安装Pytorch（GPU版）
 > 说明如下：
 > 
 > > `PyTorch` 一分为三：`torch`、`torchvision` 与 `torchaudio`。
@@ -695,6 +700,33 @@
 > > ```
 > > 
 > 
+> 
+> 
+
+
+#### 3.7 检查cuDNN是否被安装在了Pytorch深度学习框架中
+
+> 
+>
+> <font color="yellow">如果您是通过特定的深度学习框架安装的（如 `TensorFlow` 或 `PyTorch` 的某些版本），`cuDNN` 可能会被包含在框架的安装包中，而不需要单独安装。在这种情况下，`cuDNN` 会被安装在框架的目录结构中，而不是在 `CUDA Toolkit` 的目录下。</font> 
+>
+> > 
+> > <div align=center>
+> > <img src="./images/torch_9.png"  style="zoom:100%"/>
+> > </div> 
+> >  
+> 
+> ```sh
+> import torch
+> 
+> print(torch.backends.cudnn.is_available())
+> ```
+>
+> > 
+> > <div align=center>
+> > <img src="./images/torch_10.png"  style="zoom:100%"/>
+> > </div> 
+> >  
 > 
 > 
 
