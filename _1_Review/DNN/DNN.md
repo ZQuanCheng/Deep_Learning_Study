@@ -1288,14 +1288,14 @@ Activations`，即可查看 `torch` 内置的所有非线性激活函数（以�
 > > 
 > > 所以，`batch_size` 即一批中的样本数，也是一次喂进网络的样本数。此外，由于 `Batch Normalization` 层（用于将每次产生的小批量样本进行标准化）的存在，`batch_size` 一般设置为 `2` 的幂次方，并且不能为 `1`。
 > > 
-> > <font color="yellow">注：PyTorch 实现时只支持批量`BGD`与小批量`MBGD`，不支持单个样本的输入方式。`PyTorch` 里的 `torch.optim.SGD` 只表示梯度下降
+> > <font color="yellow">注：PyTorch 实现时只支持批量`BGD`与小批量`MBGD`，不支持单个样本的输入方式。`PyTorch` 里的 `torch.optim.SGD` 只表示梯度下降</font>
 > > 
 > > <font color="gree">批量与小批量见第四、五章。</font>
 > > 
 > > 
 > 
 > 
-> <font color="pink">本小节将完整、快速地再展示一遍批量梯度下降（BGD）的全过程。</font>
+> <font color="pink">本章将完整、快速地再展示一遍批量梯度下降（BGD）的全过程。</font>
 >
 > 新建 `test_ch4.ipynb`
 > 
@@ -1519,7 +1519,348 @@ Activations`，即可查看 `torch` 内置的所有非线性激活函数（以�
 #### 4.3 训练网络
 
 > 
+> <font color="gree"> 代码如下 </font>
 > 
+> > 
+> > `Jupyter Notebook` 代码块（3个）如下：
+> > 
+> > ```python
+> > # 损失函数的选择
+> > loss_fn = nn.MSELoss()  
+> > # loss_fn = nn.BCELoss(reduction='mean')
+> > ```
+> > ```python
+> > # 优化算法的选择
+> > learning_rate = 0.005 # 设置学习率
+> > optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+> > ```
+> > ```python
+> > # 训练网络
+> > epochs = 5000
+> > losses = [] # 记录损失函数变化的列表
+> > # 给训练集划分输入与输出
+> > X = train_Data[ : , : -1 ] # 前 8 列为输入特征
+> > Y = train_Data[ : , -1 ].reshape((-1,1)) # 后 1 列为输出特征
+> > # 此处的.reshape((-1,1))将一阶张量升级为二阶张量
+> > for epoch in range(epochs):
+> >     Pred = model(X) # 一次前向传播（批量）
+> >     loss = loss_fn(Pred, Y) # 计算损失函数
+> >     losses.append(loss.item()) # 记录损失函数的变化
+> >     optimizer.zero_grad() # 清理上一轮滞留的梯度
+> >     loss.backward() # 一次反向传播
+> >     optimizer.step() # 优化内部参数
+> >  
+> > Fig = plt.figure()
+> > plt.plot(range(epochs), losses)
+> > plt.ylabel('loss')
+> > plt.xlabel('epoch')
+> > plt.show()
+> > ```
+> > 
+> 
+> > 
+> > `Pycharm` 代码如下：
+> > 
+> > ```python
+> > 
+> > ...
+> > 
+> > if __name__ == '__main__':
+> > 
+> >     ...
+> > 
+> >     # 损失函数的选择
+> >     loss_fn = nn.MSELoss()  
+> >     # loss_fn = nn.BCELoss(reduction='mean')
+> > 
+> >     # 优化算法的选择
+> >     learning_rate = 0.005  # 设置学习率
+> >     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+> > 
+> >     # 训练网络
+> >     epochs = 5000
+> >     losses = []  # 记录损失函数变化的列表
+> >     # 给训练集划分输入与输出
+> >     X = train_Data[:, : -1]  # 前 8 列为输入特征
+> >     Y = train_Data[:, -1].reshape((-1, 1))  # 后 1 列为输出特征
+> >     # 此处的.reshape((-1,1))将一阶张量升级为二阶张量
+> >     # 为什么要变成二阶张量？ 因为X是二阶，之后的Pred也是二阶，为了能计算出loss，需要Y也为二阶
+> > 
+> >     for epoch in range(epochs):
+> >         Pred = model(X)  # 一次前向传播（批量）
+> >         loss = loss_fn(Pred, Y)  # 计算损失函数
+> >         losses.append(loss.item())  # 记录损失函数的变化
+> >         optimizer.zero_grad()  # 清理上一轮滞留的梯度
+> >         loss.backward()  # 一次反向传播
+> >         optimizer.step()  # 优化内部参数
+> > 
+> >     Fig = plt.figure()
+> >     plt.plot(range(epochs), losses)
+> >     plt.ylabel('loss')
+> >     plt.xlabel('epoch')
+> >     plt.show()
+> > ```
+> > 
+> 
+> 
+> > 
+> > <div align=center>
+> > <img src="./images/PyTorch_DNN_16.png"  style="zoom:100%"/>
+> > </div> 
+> > 
+> 
+> 
+> <font color="gree"> 二元交叉熵损失函数`BCEloss`的问题 </font>
+> 
+> > 
+> > <font color="yellow"> 教程用的是 `二元交叉熵损失函数 loss_fn = nn.BCELoss(reduction='mean')`, 会报错, 需要添加两行代码</font>
+> > 
+> > 二元交叉熵损失函数`BCEloss`适用于二分类问题，即
+> > > 模型的输出为一个概率值，表示样本属于某一类的概率
+> > > 标签为二元值：0 或 
+> > 
+> > 我们来试一下
+> > 
+> > ```python
+> > # 损失函数的选择
+> > # loss_fn = nn.MSELoss()  
+> > loss_fn = nn.BCELoss(reduction='mean') # 或者 loss_fn = nn.BCELoss()
+> > ```
+> > 
+> > <div align=center>
+> > <img src="./images/PyTorch_DNN_17.png"  style="zoom:100%"/>
+> > <img src="./images/PyTorch_DNN_18.png"  style="zoom:100%"/>
+> > </div> 
+> > 
+> > > <font color="yellow"> 解决办法 </font>
+> > > 
+> > > https://blog.csdn.net/qq_36758270/article/details/134119583
+> > > https://codeleading.com/article/21021977079/
+> > > https://blog.csdn.net/sun1311523821/article/details/127453141
+> > > https://blog.csdn.net/weixin_45719141/article/details/119243073
+> > > https://blog.csdn.net/weixin_37804469/article/details/129779296
+> > > 
+> > > 
+> > > 1. 报错对应的代码部分与实际出现错误的部分是不同的, 当出现该报错时，首先在代码加载库包部分加入下面两行代码（首先找到代码实际报错位置）：
+> > > 
+> > > ```python
+> > > import os
+> > > os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
+> > > ```
+> > > 
+> > > <div align=center>
+> > > <img src="./images/PyTorch_DNN_19.png"  style="zoom:100%"/>
+> > > </div> 
+> > >  
+> > > 真正出问题的是计算`loss = loss_fn(Pred, Y)  # 计算损失函数`
+> > > 
+> > > 2. 一般是两个问题: 数据维度不一致, 数据范围超出
+> > > 
+> > > 先看是不是`数据维度不一致`?
+> > > 
+> > > ```python
+> > >     for epoch in range(epochs):
+> > >         Pred = model(X)  # 一次前向传播（批量）
+> > >         print(Pred.type(), Y.type())   # orch.cuda.FloatTensor torch.cuda.FloatTensor
+> > >         print(Pred.shape, Y.shape)  # torch.Size([531, 1]) torch.Size([531, 1])
+> > >         # loss = loss_fn(Pred, Y)  # 计算损失函数
+> > >         # losses.append(loss.item())  # 记录损失函数的变化
+> > >         # optimizer.zero_grad()  # 清理上一轮滞留的梯度
+> > >         # loss.backward()  # 一次反向传播
+> > >         # optimizer.step()  # 优化内部参数
+> > > ```
+> > > 
+> > > 再看是否`超出数值范围`。BCELoss 要求其输入介于 0 和 1 之间。如果输入（模型的输出）超出该特定损失函数的可接受范围，则会触发错误。
+> > > 
+> > > ```python
+> > >     for epoch in range(epochs):
+> > >         Pred = model(X)  # 一次前向传播（批量）
+> > >         print(torch.max(Pred).item(), torch.min(Pred).item())
+> > >         print(torch.max(Y).item(), torch.min(Y).item())
+> > >         loss = loss_fn(Pred, Y)  # 计算损失函数
+> > >         losses.append(loss.item())  # 记录损失函数的变化
+> > >         optimizer.zero_grad()  # 清理上一轮滞留的梯度
+> > >         loss.backward()  # 一次反向传播
+> > >         optimizer.step()  # 优化内部参数
+> > > ```
+> > > 
+> > > 出现`41.0053989887237549 0.28361040353775024`, 说明范围超出
+> > > 
+> > > 修改训练的过程如下
+> > > 
+> > > ```python
+> > >     for epoch in range(epochs):
+> > >         Pred = model(X)  # 一次前向传播（批量）
+> > >         Pred[Pred < 0.0] = 0.0  # BCELoss中输入的张的范围必须在[0.0,1.0]之间
+> > >         Pred[Pred > 1.0] = 1.0  # 强行限制到0-1
+> > >         loss = loss_fn(Pred, Y)  # 计算损失函数
+> > >         losses.append(loss.item())  # 记录损失函数的变化
+> > >         optimizer.zero_grad()  # 清理上一轮滞留的梯度
+> > >         loss.backward()  # 一次反向传播
+> > >         optimizer.step()  # 优化内部参数
+> > > ```
+> > > 
+> > 
+> > <div align=center>
+> > <img src="./images/PyTorch_DNN_20.png"  style="zoom:100%"/>
+> > </div> 
+> > 
+> 
+> 
+
+
+
+
+#### 4.4 测试网络
+
+> 
+> <font color="gree"> 注意，真实的输出特征都是 `0` 或 `1`，因此这里需要对网络预测的输出 `Pred` 进行处理，Pred 大于 `0.5` 的部分全部置 `1`，小于 `0.5` 的部分全部置 `0`。</font>
+>
+> 
+> > 
+> > `Jupyter Notebook` 代码块如下：
+> > 
+> > ```python
+> > # 测试网络
+> > # 给测试集划分输入与输出
+> > X = test_Data[ : , : -1 ] # 前 8 列为输入特征
+> > Y = test_Data[ : , -1 ].reshape((-1,1)) # 后 1 列为输出特征
+> > with torch.no_grad(): # 该局部关闭梯度计算功能
+> >     Pred = model(X) # 一次前向传播（批量）
+> >     Pred[Pred>=0.5] = 1
+> >     Pred[Pred<0.5] = 0
+> >     correct = torch.sum( (Pred == Y).all(1) ) # 预测正确的样本
+> >     total = Y.size(0) # 全部的样本数量
+> >     print(f'测试集精准度: {100*correct/total} %')
+> > ```
+> 
+> > 
+> > `Pycharm` 代码如下：
+> > 
+> > ```python
+> > 
+> > ...
+> > 
+> > if __name__ == '__main__':
+> > 
+> >     ...
+> > 
+> >     # 测试网络
+> >     # 给测试集划分输入与输出
+> >     X = test_Data[:, : -1]  # 前 8 列为输入特征
+> >     Y = test_Data[:, -1].reshape((-1, 1))  # 后 1 列为输出特征
+> >     with torch.no_grad():  # 该局部关闭梯度计算功能
+> >         Pred = model(X)  # 一次前向传播（批量）
+> >         Pred[Pred >= 0.5] = 1
+> >         Pred[Pred < 0.5] = 0
+> >         correct = torch.sum((Pred == Y).all(1))  # 预测正确的样本
+> >         total = Y.size(0)  # 全部的样本数量
+> >         print(f'测试集精准度: {100 * correct / total} %')
+> > ```
+> 
+> > 
+> > <div align=center>
+> > <img src="./images/PyTorch_DNN_21.png"  style="zoom:100%"/>
+> > </div> 
+> > 
+> 
+> 
+> 
+> 
+
+
+
+
+
+
+
+### 五、小批量梯度下降
+
+
+
+> <font color="yellow"> 前情提要 </font>
+>
+> > 前向传播与反向传播一次时，有三种情况：
+> > 
+> > > * `批量梯度下降`（Batch Gradient Descent，`BGD`），把所有样本一次性输入进网络，这种方式计算量开销很大，速度也很慢。
+> > > 
+> > > * `随机梯度下降`（Stochastic Gradient Descent，`SGD`），每次只把一个样本输入进网络，每计算一个样本就更新参数。这种方式虽然速度比较快，但是收敛性能差，可能会在最优点附近震荡，两次参数的更新也有可能抵消。
+> > > 
+> > > * `小批量梯度下降`（Mini-Batch Gradient Decent，`MBGD`）是为了中和上面二者而生，这种办法把样本划分为若干个批，按批来更新参数。
+> > 
+> > 所以，`batch_size` 即一批中的样本数，也是一次喂进网络的样本数。此外，由于 `Batch Normalization` 层（用于将每次产生的小批量样本进行标准化）的存在，`batch_size` 一般设置为 `2` 的幂次方，并且不能为 `1`。
+> > 
+> > <font color="yellow">注：PyTorch 实现时只支持批量`BGD`与小批量`MBGD`，不支持单个样本的输入方式。`PyTorch` 里的 `torch.optim.SGD` 只表示梯度下降</font>
+> > 
+> > <font color="gree">批量与小批量见第四、五章。</font>
+> > 
+> > 
+> 
+> 
+> <font color="pink">本章将完整、快速地再展示一遍小批量梯度下降（MBGD）的全过程。</font>
+>
+> > 本章将继续使用第四章中的 Excel 与神经网络结构，但使用小批量训练。在使用小批量梯度下降时，必须使用 3 个 PyTorch 内置的实用工具（`utils`）：
+> >
+> > * `DataSet` 用于封装数据集；
+> > * `DataLoader` 用于加载数据不同的批次；
+> > * `random_split` 用于划分训练集与测试集。
+> 
+> 
+>
+> > 新建 `test_ch5.ipynb`
+> > 
+> > `Jupyter Notebook` 代码块（2个）如下：
+> > 
+> > ```python
+> > import numpy as np
+> > import pandas as pd
+> > import torch
+> > import torch.nn as nn
+> > from torch.utils.data import Dataset
+> > from torch.utils.data import DataLoader
+> > from torch.utils.data import random_split
+> > import matplotlib.pyplot as plt
+> > %matplotlib inline
+> > ```
+> > 
+> > ```python
+> > # 展示高清图
+> > from matplotlib_inline import backend_inline
+> > backend_inline.set_matplotlib_formats('svg')
+> > ```
+> > 
+> > 
+> > 
+> > `Pycharm` 代码如下：
+> > 
+> > ```python
+> > import numpy as np
+> > import pandas as pd
+> > import torch
+> > import torch.nn as nn
+> > from torch.utils.data import Dataset
+> > from torch.utils.data import DataLoader
+> > from torch.utils.data import random_split
+> > import matplotlib.pyplot as plt
+> > from matplotlib_inline import backend_inline # 展示高清图
+> > 
+> > if __name__ == '__main__':
+> >     # 展示高清图
+> >     # 之前已导入库from matplotlib_inline import backend_inline
+> >     backend_inline.set_matplotlib_formats('svg')
+> > ```
+> 
+> 
+> 
+
+
+
+
+#### 5.1 制作数据集
+
+
+> 
+> 在封装我们的数据集时，必须继承实用工具（`utils`）中的 `DataSet` 的类，这个过程需要重写`__init__、__getitem__、__len__` 三个方法，分别是为了`加载数据集、获取数据索引、获取数据总量`。
 > 
 > 
 > 
