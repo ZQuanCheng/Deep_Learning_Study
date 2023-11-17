@@ -868,7 +868,7 @@ Activations`，即可查看 `torch` 内置的所有非线性激活函数（以�
 > >     Pred[Pred != 1] = 0
 > >     correct = torch.sum((Pred == Y).all(1))  # 预测正确的样本
 > >     total = Y.size(0)  # 全部的样本数量
-> >     print(f'测试集精准度: {100*correct/total} %')
+> > print(f'测试集精准度: {100*correct/total} %')
 > > ```
 > > 
 > > 
@@ -892,7 +892,7 @@ Activations`，即可查看 `torch` 内置的所有非线性激活函数（以�
 > >         Pred[Pred != 1] = 0
 > >         correct = torch.sum((Pred == Y).all(1))  # 预测正确的样本
 > >         total = Y.size(0)  # 全部的样本数量
-> >         print(f'测试集精准度: {100*correct/total} %')
+> >     print(f'测试集精准度: {100*correct/total} %')
 > > ```
 >
 > 
@@ -905,14 +905,49 @@ Activations`，即可查看 `torch` 内置的所有非线性激活函数（以�
 >
 > <font color="gree"> 注： </font>
 > 
+> > 
+> > Jupyter 测试一下
+> > 
+> > ```python
+> > # 测试网络
+> > # 给测试集划分输入与输出
+> > X = test_Data[:, :3]  # 前 3 列为输入特征
+> > Y = test_Data[:, -3:]  # 后 3 列为输出特征
+> > with torch.no_grad():  # 该局部关闭梯度计算功能
+> >     Pred = model(X)  # 一次前向传播（批量）
+> >     Pred[:, torch.argmax(Pred, axis=1)] = 1
+> >     Pred[Pred != 1] = 0
+> >     print(Pred.type(), Y.type())   
+> >     print(Pred.shape, Y.shape)     
+> >     print((Pred == Y).type(), (Pred == Y).all(1).type())   
+> >     print((Pred == Y).shape, (Pred == Y).all(1).shape)  
+> >     correct = torch.sum((Pred == Y).all(1))  # 预测正确的样本
+> >     total = Y.size(0)  # 全部的样本数量
+> > print(f'测试集精准度: {100*correct/total} %')
+> > ```
+> > 
+> > `Jupyter` 的 `Out [13]` 如下
+> > 
+> > ```c
+> > torch.cuda.FloatTensor torch.cuda.FloatTensor
+> > torch.Size([3000, 3]) torch.Size([3000, 3])
+> > torch.cuda.BoolTensor torch.cuda.BoolTensor
+> > torch.Size([3000, 3]) torch.Size([3000])
+> > 测试集精准度: 71.92982482910156 %
+> > ```
+> > 
 > > 在计算 `correct` 时需要动点脑筋。
 > > 
-> > 首先，`(Pred == Y)`计算预测的输出与真实的输出的各个元素是否相等，返回一个 `3000` 行、`3` 列的布尔型张量。
+> > 首先，`(Pred == Y)`计算预测的输出与真实的输出的各个元素是否相等，返回一个 `3000` 行、`3` 列的`布尔型二阶张量（3000 x 3 的矩阵）`。
 > > 
-> > 其次，`(Pred == Y).all(1)`检验该布尔型张量每一行的 `3` 个数据是否都是 `True`，对于全是 `True` 的样本行，结果就是 `True`，否则是 `False`。`all(1)`中的 `1` 表示按“行”扫描，最终返回一个形状为 `3000` 的`一阶张量`。
+> > 其次，`(Pred == Y).all(1)`检验该布尔型张量每一行的 `3` 个数据是否都是 `True`，对于全是 `True` 的样本行，结果就是 `True`，否则是 `False`。`all(1)`中的 `1` 表示按“行”扫描，最终返回一个形状为 `3000` 的`一阶张量（长度为 3000 的向量）`。
 > > 
-> > 最后，`torch.sum( (Pred == Y).all(1) )`的意思就是看这 `3000` 个向量相加，`True`会被当作 `1`，False 会被当作 `0`，这样相加刚好就是预测正确的样本数
+> > 最后，`torch.sum( (Pred == Y).all(1) )`的意思就是看这 `3000` 个`向量元素`相加，`True`会被当作 `1`，False 会被当作 `0`，这样相加刚好就是预测正确的样本数
 > > 
+> > 
+> > 只有 `每行长度超过1的矩阵`，进行`.all(1)`才有意义.
+> > 
+> > 虽然`长度3000的向量`和 `3000 x 1 的矩阵`所含信息相同，但是只有`矩阵`才能进行`.all(1)`运算.
 > 
 > 
 > 
@@ -1613,11 +1648,11 @@ Activations`，即可查看 `torch` 内置的所有非线性激活函数（以�
 > <font color="gree"> 二元交叉熵损失函数`BCEloss`的问题 </font>
 > 
 > > 
-> > <font color="yellow"> 教程用的是 `二元交叉熵损失函数 loss_fn = nn.BCELoss(reduction='mean')`, 会报错, 需要添加两行代码</font>
+> > <font color="yellow"> 教程用的是 `二元交叉熵损失函数 loss_fn = nn.BCELoss(reduction='mean')`, 会报错, 需要添加一句代码</font>
 > > 
 > > 二元交叉熵损失函数`BCEloss`适用于二分类问题，即
 > > > 模型的输出为一个概率值，表示样本属于某一类的概率
-> > > 标签为二元值：0 或 
+> > > 标签为二元值：0 或 1
 > > 
 > > 我们来试一下
 > > 
@@ -1684,25 +1719,51 @@ Activations`，即可查看 `torch` 内置的所有非线性激活函数（以�
 > > >         optimizer.step()  # 优化内部参数
 > > > ```
 > > > 
-> > > 出现`41.0053989887237549 0.28361040353775024`, 说明范围超出
-> > > 
-> > > 修改训练的过程如下
-> > > 
-> > > ```python
-> > >     for epoch in range(epochs):
-> > >         Pred = model(X)  # 一次前向传播（批量）
-> > >         Pred[Pred < 0.0] = 0.0  # BCELoss中输入的张的范围必须在[0.0,1.0]之间
-> > >         Pred[Pred > 1.0] = 1.0  # 强行限制到0-1
-> > >         loss = loss_fn(Pred, Y)  # 计算损失函数
-> > >         losses.append(loss.item())  # 记录损失函数的变化
-> > >         optimizer.zero_grad()  # 清理上一轮滞留的梯度
-> > >         loss.backward()  # 一次反向传播
-> > >         optimizer.step()  # 优化内部参数
-> > > ```
+> > > 出现`1.0053989887237549 0.28361040353775024`, 说明范围超出
 > > > 
 > > 
+> > <font color="gree"> 1. 修改神经网络如下, 输出层采用`sigmoid`激活函数，将输出限制在`0-1`之间 </font>
+> > 
+> > ```python
+> > class DNN(nn.Module):
+> >     def __init__(self):
+> >         ''' 搭建神经网络各层 '''
+> >         super(DNN, self).__init__()
+> >         self.net = nn.Sequential(    # 按顺序搭建各层
+> >             nn.Linear(8, 32), nn.Sigmoid(), # 第 1 层：全连接层
+> >             nn.Linear(32, 8), nn.Sigmoid(), # 第 2 层：全连接层
+> >             nn.Linear(8, 4), nn.Sigmoid(), # 第 3 层：全连接层
+> >             nn.Linear(4, 1), nn.Sigmoid() # 第 4 层：全连接层
+> >         )
+> > 
+> >     def forward(self, x):
+> >         ''' 前向传播 '''
+> >         y = self.net(x)  # x 即输入数据, 这里的net和__init__()中的net要一致，自己起名
+> >         return y         # y 即输出数据
+> > 
+> > ```
+> > 
+> > <font color="gree"> 2. `Jupyter` 的 `Out [6]` 变为 </font>
+> > 
+> > ```c
+> > DNN(
+> >   (net): Sequential(
+> >     (0): Linear(in_features=8, out_features=32, bias=True)
+> >     (1): Sigmoid()
+> >     (2): Linear(in_features=32, out_features=8, bias=True)
+> >     (3): Sigmoid()
+> >     (4): Linear(in_features=8, out_features=4, bias=True)
+> >     (5): Sigmoid()
+> >     (6): Linear(in_features=4, out_features=1, bias=True)
+> >     (7): Sigmoid()
+> >   )
+> > )
+> > ```
+> > 
+> > <font color="gree"> 3. 再执行训练，不会报错 </font>
+> > 
 > > <div align=center>
-> > <img src="./images/PyTorch_DNN_20.png"  style="zoom:100%"/>
+> > <img src="./images/PyTorch_DNN_21.png"  style="zoom:100%"/>
 > > </div> 
 > > 
 > 
@@ -1731,7 +1792,7 @@ Activations`，即可查看 `torch` 内置的所有非线性激活函数（以�
 > >     Pred[Pred<0.5] = 0
 > >     correct = torch.sum( (Pred == Y).all(1) ) # 预测正确的样本
 > >     total = Y.size(0) # 全部的样本数量
-> >     print(f'测试集精准度: {100*correct/total} %')
+> > print(f'测试集精准度: {100*correct/total} %')
 > > ```
 > 
 > > 
@@ -1753,18 +1814,60 @@ Activations`，即可查看 `torch` 内置的所有非线性激活函数（以�
 > >         Pred = model(X)  # 一次前向传播（批量）
 > >         Pred[Pred >= 0.5] = 1
 > >         Pred[Pred < 0.5] = 0
-> >         correct = torch.sum((Pred == Y).all(1))  # 预测正确的样本
+> >         correct = torch.sum((Pred == Y))  # 预测正确的样本
 > >         total = Y.size(0)  # 全部的样本数量
-> >         print(f'测试集精准度: {100 * correct / total} %')
+> >     print(f'测试集精准度: {100 * correct / total} %')
 > > ```
 > 
 > > 
 > > <div align=center>
-> > <img src="./images/PyTorch_DNN_21.png"  style="zoom:100%"/>
+> > <img src="./images/PyTorch_DNN_22.png"  style="zoom:100%"/>
 > > </div> 
 > > 
 > 
-> 
+>
+> <font color="gree"> 注： </font>
+>
+> > 
+> > 由于此处 `Pred` 与 `Y` 是`二阶张量（228 x 1 的矩阵）`，每行长度只有`1`，因此 `correct` 行的结尾不需要加`.all(1)`
+> > 
+> > 当然加了也没问题，不会报错
+> > 
+> > Jupyter 测试一下
+> > 
+> > ```python
+> > # 测试网络
+> > # 给测试集划分输入与输出
+> > X = test_Data[ : , : -1 ] # 前 8 列为输入特征
+> > Y = test_Data[ : , -1 ].reshape((-1,1)) # 后 1 列为输出特征
+> > with torch.no_grad(): # 该局部关闭梯度计算功能
+> >     Pred = model(X) # 一次前向传播（批量）
+> >     Pred[Pred>=0.5] = 1
+> >     Pred[Pred<0.5] = 0
+> >     print(Pred.type(), Y.type())   
+> >     print(Pred.shape, Y.shape)
+> >     print((Pred == Y).type(), (Pred == Y).all(1).type())   
+> >     print((Pred == Y).shape, (Pred == Y).all(1).shape)      
+> >     correct = torch.sum( (Pred == Y).all(1) ) # 预测正确的样本
+> >     total = Y.size(0) # 全部的样本数量
+> > print(f'测试集精准度: {100*correct/total} %')
+> > ```
+> > 
+> > `Jupyter` 的 `Out [11]` 如下
+> > 
+> > ```c
+> > torch.cuda.FloatTensor torch.cuda.FloatTensor
+> > torch.Size([228, 1]) torch.Size([228, 1])
+> > torch.cuda.BoolTensor torch.cuda.BoolTensor
+> > torch.Size([228, 1]) torch.Size([228])
+> > 测试集精准度: 71.92982482910156 %
+> > ```
+> > 
+> > 可以看出，`Pred` 和 `Y` 都是`二阶张量（228 x 1 的矩阵）`，`(Pred == Y)` 也是`二阶张量（228 x 1 的矩阵）`，所以可以进行`.all(1)`
+> > 
+> > 当然，只有 `每行长度超过1的矩阵`，进行`.all(1)`才有意义.
+> > 
+> > 虽然`长度228的向量`和 `228 x 1 的矩阵`所含信息相同，但是只有`矩阵`才能进行`.all(1)`运算.
 > 
 > 
 
@@ -1859,18 +1962,1095 @@ Activations`，即可查看 `torch` 内置的所有非线性激活函数（以�
 #### 5.1 制作数据集
 
 
+> <font color="pink">1. 定义数据集类</font>
 > 
-> 在封装我们的数据集时，必须继承实用工具（`utils`）中的 `DataSet` 的类，这个过程需要重写`__init__、__getitem__、__len__` 三个方法，分别是为了`加载数据集、获取数据索引、获取数据总量`。
-> 
-> 
-> 
+> 在封装我们的数据集时，必须继承实用工具（`utils`）中的 `DataSet` 的类，这个过程需要重写`__init__、__getitem__、__len__` 三个方法，分别是为了`加载数据集、获取数据索引(通过索引获取数据)、获取数据总量`。
 > 
 > 
+> 
+> > `Jupyter Notebook` 代码块如下：
+> > 
+> > ```python
+> > # 制作数据集
+> > class MyData(Dataset): # 继承 Dataset 类
+> >     # 加载数据集
+> >     def __init__(self, filepath):
+> >         df = pd.read_csv(filepath, index_col=0)  # 导入数据
+> >         arr = df.values  # 对象退化为数组
+> >         arr = arr.astype(np.float32)  # 转为 float32 类型数组
+> >         ts = torch.tensor(arr)  # 数组转为张量
+> >         ts = ts.to('cuda')  # 把训练集搬到 cuda 上
+> >         # 小批次训练时，输入特征与输出特征的划分必须写在的子类MyData里面。
+> >         self.X = ts[:, : -1]  # 前 8 列为输入特征
+> >         self.Y = ts[:, -1].reshape((-1, 1))  # 后 1 列为输出特征
+> >         self.len = ts.shape[0]  # 样本的总数
+> > 
+> >     # 通过索引获取输入数据、输出数据
+> >     def __getitem__(self, index):
+> >         return self.X[index], self.Y[index]
+> > 
+> >     # 获取数据总量
+> >     def __len__(self):
+> >         return self.len
+> > ```
+> > 
+> > 
+> > 
+> > `Pycharm` 代码如下：
+> > 
+> > ```python
+> > 
+> > ...
+> > 
+> > # 制作数据集
+> > class MyData(Dataset): # 继承 Dataset 类
+> >     # 加载数据集
+> >     def __init__(self, filepath):
+> >         df = pd.read_csv(filepath, index_col=0)  # 导入数据
+> >         arr = df.values  # 对象退化为数组
+> >         arr = arr.astype(np.float32)  # 转为 float32 类型数组
+> >         ts = torch.tensor(arr)  # 数组转为张量
+> >         ts = ts.to('cuda')  # 把训练集搬到 cuda 上
+> >         # 小批次训练时，输入特征与输出特征的划分必须写在的子类MyData里面。
+> >         self.X = ts[:, : -1]  # 前 8 列为输入特征
+> >         self.Y = ts[:, -1].reshape((-1, 1))  # 后 1 列为输出特征
+> >         self.len = ts.shape[0]  # 样本的总数
+> > 
+> >     # 通过索引获取输入数据、输出数据
+> >     def __getitem__(self, index):
+> >         return self.X[index], self.Y[index]
+> > 
+> >     # 获取数据总量
+> >     def __len__(self):
+> >         return self.len
+> > 
+> > if __name__ == '__main__':
+> >     
+> >     ...
+> >     
+> > ```
+> > 
+> > <font color="yellow">小批次训练时，输入特征与输出特征的划分必须写在的子类`MyData`里面。</font>
+> > 
+>
+> 
+> <font color="pink">2. 划分训练集与测试集</font>
+> 
+> 
+> > `Jupyter Notebook` 代码块如下：
+> > 
+> > ```python
+> > # 划分训练集与测试集
+> > Data = MyData('Data.csv')
+> > train_size = int(len(Data) * 0.7) # 训练集的样本数量
+> > test_size = len(Data) - train_size # 测试集的样本数量
+> > train_Data, test_Data = random_split(Data, [train_size, test_size])
+> > ```
+> > 
+> > `Pycharm` 代码如下：
+> > 
+> > ```python
+> > 
+> > ...
+> > 
+> > if __name__ == '__main__':
+> >     
+> >     ...
+> > 
+> >     # 划分训练集与测试集
+> >     Data = MyData('Data.csv')
+> >     train_size = int(len(Data) * 0.7)  # 训练集的样本数量
+> >     test_size = len(Data) - train_size  # 测试集的样本数量
+> >     train_Data, test_Data = random_split(Data, [train_size, test_size])
+> > ```
+> > 
+> > 我们利用实用工具（`utils`）里的 `random_split` 轻松实现了训练集与测试集数据的划分。
+> > 
+> 
+> 
+> <font color="pink">3. 批次加载器</font>
+> 
+> 
+> > `Jupyter Notebook` 代码块如下：
+> > 
+> > ```python
+> > # 批次加载器
+> > train_loader = DataLoader(dataset=train_Data, shuffle=True, batch_size=128)
+> > test_loader = DataLoader(dataset=test_Data, shuffle=False, batch_size=64)
+> > ```
+> > 
+> > `Pycharm` 代码如下：
+> > 
+> > ```python
+> > 
+> > ...
+> > 
+> > if __name__ == '__main__':
+> >     
+> >     ...
+> > 
+> >     # 批次加载器
+> >     train_loader = DataLoader(dataset=train_Data, shuffle=True, batch_size=128)
+> >     test_loader = DataLoader(dataset=test_Data, shuffle=False, batch_size=64)
+> > ```
+> > 
+> > 实用工具（`utils`）里的 `DataLoader` 可以在接下来的训练中进行小批次的载入数据，`shuffle` 用于在每一个 `epoch` 内先洗牌再分批。
+> > 
+> > 
+> > <font color="yellow"> `DataLoader`中的`shuffle`是"洗牌"的意思，就是说每一个`epoch`之内，我们是不是都要进行小批次的划分，最好每一个 `epoch` 划分的结果都不一样。</font>
+> > 
+> > <font color="yellow"> 训练样本时需要"洗牌"，但是测试集只跑一次，没必要用`shuffle`进行" 洗牌" </font>
+> > 
+> 
+> 
+
+
+
+
+#### 5.2 搭建神经网络
+
+
+> 
+> 
+> 
+> `Jupyter Notebook` 代码块（2个）如下：
+> > 
+> > ```python
+> > # 代码块1
+> > class DNN(nn.Module):
+> >     def __init__(self):
+> >         ''' 搭建神经网络各层 '''
+> >         super(DNN,self).__init__()
+> >         self.net = nn.Sequential( # 按顺序搭建各层
+> >             nn.Linear(8, 32), nn.Sigmoid(), # 第 1 层：全连接层
+> >             nn.Linear(32, 8), nn.Sigmoid(), # 第 2 层：全连接层
+> >             nn.Linear(8, 4), nn.Sigmoid(), # 第 3 层：全连接层
+> >             nn.Linear(4, 1), nn.Sigmoid() # 第 4 层：全连接层
+> >         )
+> >     def forward(self, x):
+> >         ''' 前向传播 '''
+> >         y = self.net(x) # x 即输入数据
+> >         return y # y 即输出数据
+> > ```
+> > ```python
+> > # 代码块2
+> > model = DNN().to('cuda:0') # 创建子类的实例，并搬到 GPU 上
+> > model # 查看该实例的各层
+> > ```
+> > 
+> 
+> `Pycharm` 代码如下：
+> 
+> > 
+> > ```python
+> > # 搭建神经网络
+> > class DNN(nn.Module):
+> >     def __init__(self):
+> >         ''' 搭建神经网络各层 '''
+> >         super(DNN, self).__init__()
+> >         self.net = nn.Sequential(    # 按顺序搭建各层
+> >             nn.Linear(8, 32), nn.Sigmoid(), # 第 1 层：全连接层
+> >             nn.Linear(32, 8), nn.Sigmoid(), # 第 2 层：全连接层
+> >             nn.Linear(8, 4), nn.Sigmoid(), # 第 3 层：全连接层
+> >             nn.Linear(4, 1), nn.Sigmoid() # 第 4 层：全连接层
+> >         )
+> > 
+> >     def forward(self, x):
+> >         ''' 前向传播 '''
+> >         y = self.net(x)  # x 即输入数据, 这里的net和__init__()中的net要一致，自己起名
+> >         return y         # y 即输出数据
+> > 
+> > 
+> > 
+> > if __name__ == '__main__':
+> > 
+> >     ...
+> > 
+> >     model = DNN().to('cuda:0')  # 创建子类的实例，并搬到 GPU 上
+> >     print(model)                # 查看该实例的各层
+> > ```
+> > 
+>
+> 
+> > 
+> > `Jupyter` 的 `Out [7]` 如下
+> > 
+> > ```c
+> > DNN(
+> >   (net): Sequential(
+> >     (0): Linear(in_features=8, out_features=32, bias=True)
+> >     (1): Sigmoid()
+> >     (2): Linear(in_features=32, out_features=8, bias=True)
+> >     (3): Sigmoid()
+> >     (4): Linear(in_features=8, out_features=4, bias=True)
+> >     (5): Sigmoid()
+> >     (6): Linear(in_features=4, out_features=1, bias=True)
+> >     (7): Sigmoid()
+> >   )
+> > )
+> > ```
+> > 
+> 
+> 
+
+
+
+
+
+
+#### 5.3 训练网络
+
+
+
+> 
+> <font color="gree"> 使用`MSEloss`的代码如下 </font>
+> 
+> > 
+> > `Jupyter Notebook` 代码块（3个）如下：
+> > 
+> > ```python
+> > # 损失函数的选择
+> > loss_fn = nn.MSELoss()  
+> > # loss_fn = nn.BCELoss(reduction='mean')
+> > ```
+> > ```python
+> > # 优化算法的选择
+> > learning_rate = 0.005 # 设置学习率
+> > optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+> > ```
+> > ```python
+> > # 训练网络
+> > epochs = 500
+> > losses = [] # 记录损失函数变化的列表
+> > 
+> > for epoch in range(epochs):
+> >     for (x, y) in train_loader: # 获取小批次的 x 与 y
+> >         Pred = model(x) # 一次前向传播（小批量）
+> >         loss = loss_fn(Pred, y) # 计算损失函数
+> >         losses.append(loss.item()) # 记录损失函数的变化
+> >         optimizer.zero_grad() # 清理上一轮滞留的梯度
+> >         loss.backward() # 一次反向传播
+> >         optimizer.step() # 优化内部参数
+> >         
+> > Fig = plt.figure()
+> > plt.plot(range(len(losses)), losses)
+> > plt.show()
+> > ```
+> > 
+> 
+> > 
+> > `Pycharm` 代码如下：
+> > 
+> > ```python
+> > 
+> > ...
+> > 
+> > if __name__ == '__main__':
+> > 
+> >     ...
+> > 
+> >     # 损失函数的选择
+> >     loss_fn = nn.MSELoss()  
+> >     # loss_fn = nn.BCELoss(reduction='mean')
+> > 
+> >     # 优化算法的选择
+> >     learning_rate = 0.005  # 设置学习率
+> >     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+> > 
+> >     # 训练网络
+> >     epochs = 500
+> >     losses = []  # 记录损失函数变化的列表
+> > 
+> >     for epoch in range(epochs):
+> >         for (x, y) in train_loader:  # 获取小批次的 x 与 y
+> >             Pred = model(x)  # 一次前向传播（小批量）
+> >             # Pred[Pred < 0.0] = 0.0  # BCELoss中输入的张的范围必须在[0.0,1.0]之间
+> >             # Pred[Pred > 1.0] = 1.0  # 强行限制到0-1
+> >             loss = loss_fn(Pred, y)  # 计算损失函数
+> >             losses.append(loss.item())  # 记录损失函数的变化
+> >             optimizer.zero_grad()  # 清理上一轮滞留的梯度
+> >             loss.backward()  # 一次反向传播
+> >             optimizer.step()  # 优化内部参数
+> > 
+> >     Fig = plt.figure()
+> >     plt.plot(range(len(losses)), losses)
+> >     plt.show()
+> > ```
+> > 
+> > 
+> > <div align=center>
+> > <img src="./images/PyTorch_DNN_23.png"  style="zoom:100%"/>
+> > <img src="./images/PyTorch_DNN_24.png"  style="zoom:100%"/>
+> > </div> 
+> > 
+> 
+> 
+> <font color="gree"> 使用`BCEloss`的代码如下 </font>
+> 
+> > 
+> > `Jupyter Notebook` 代码块（3个）如下：
+> > 
+> > ```python
+> > # 损失函数的选择
+> > # loss_fn = nn.MSELoss()  
+> > loss_fn = nn.BCELoss(reduction='mean')
+> > ```
+> > ```python
+> > # 优化算法的选择
+> > learning_rate = 0.005 # 设置学习率
+> > optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+> > ```
+> > ```python
+> > # 训练网络
+> > epochs = 500
+> > losses = [] # 记录损失函数变化的列表
+> > 
+> > for epoch in range(epochs):
+> >     for (x, y) in train_loader: # 获取小批次的 x 与 y
+> >         Pred = model(x) # 一次前向传播（小批量）
+> >         loss = loss_fn(Pred, y) # 计算损失函数
+> >         losses.append(loss.item()) # 记录损失函数的变化
+> >         optimizer.zero_grad() # 清理上一轮滞留的梯度
+> >         loss.backward() # 一次反向传播
+> >         optimizer.step() # 优化内部参数
+> >         
+> > Fig = plt.figure()
+> > plt.plot(range(len(losses)), losses)
+> > plt.show()
+> > ```
+> > 
+> 
+> > 
+> > `Pycharm` 代码如下：
+> > 
+> > ```python
+> > 
+> > ...
+> > 
+> > if __name__ == '__main__':
+> > 
+> >     ...
+> > 
+> >     # 损失函数的选择
+> >     # loss_fn = nn.MSELoss()  
+> >     loss_fn = nn.BCELoss(reduction='mean')
+> > 
+> >     # 优化算法的选择
+> >     learning_rate = 0.005  # 设置学习率
+> >     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+> > 
+> >     # 训练网络
+> >     epochs = 500
+> >     losses = []  # 记录损失函数变化的列表
+> > 
+> >     for epoch in range(epochs):
+> >         for (x, y) in train_loader:  # 获取小批次的 x 与 y
+> >             Pred = model(x)  # 一次前向传播（小批量）
+> >             loss = loss_fn(Pred, y)  # 计算损失函数
+> >             losses.append(loss.item())  # 记录损失函数的变化
+> >             optimizer.zero_grad()  # 清理上一轮滞留的梯度
+> >             loss.backward()  # 一次反向传播
+> >             optimizer.step()  # 优化内部参数
+> > 
+> >     Fig = plt.figure()
+> >     plt.plot(range(len(losses)), losses)
+> >     plt.show()
+> > ```
+> > 
+> > 
+> > <div align=center>
+> > <img src="./images/PyTorch_DNN_25.png"  style="zoom:100%"/>
+> > <img src="./images/PyTorch_DNN_26.png"  style="zoom:100%"/>
+> > </div> 
+> > 
+>
+> 
+> <font color="gree">为什么批量梯度下降`BGD`的loss递减，但是小批量`MBGD`的损失函数`loss`不是递减了呢？ </font>
+> 
+> > <font color="yellow"> 
+> > 
+> > 批量梯度下降的时候，每一个前向和反向传播，针对的是全部样本。`loss`下降的方向一定是针对整个样本下降的方向
+> > 
+> > 小批量梯度下降的时候，每一个前向和反向传播，针对的样本都不一样，这一次反向传播优化只是针对这个小批次样本的
+> > 
+> > </font>
 > 
 > 
 > 
 
 
+
+
+
+
+#### 5.4 测试网络
+
+> 
+> <font color="gree"> 注意，真实的输出特征都是 `0` 或 `1`，因此这里需要对网络预测的输出 `Pred` 进行处理，Pred 大于 `0.5` 的部分全部置 `1`，小于 `0.5` 的部分全部置 `0`。</font>
+>
+> 
+> > 
+> > `Jupyter Notebook` 代码块如下：
+> > 
+> > ```python
+> > # 测试网络
+> > correct = 0
+> > total = 0
+> > with torch.no_grad():  # 该局部关闭梯度计算功能
+> >     for (x, y) in test_loader:  # 获取小批次的 x 与 y
+> >         Pred = model(x)  # 一次前向传播（小批量）
+> >         Pred[Pred >= 0.5] = 1
+> >         Pred[Pred < 0.5] = 0
+> >         correct += torch.sum((Pred == y).all(1))
+> >         total += y.size(0)
+> > print(f'测试集精准度: {100 * correct / total} %')
+> > ```
+> 
+> > 
+> > `Pycharm` 代码如下：
+> > 
+> > ```python
+> > 
+> > ...
+> > 
+> > if __name__ == '__main__':
+> > 
+> >     ...
+> > 
+> >     # 测试网络
+> >     correct = 0
+> >     total = 0
+> >     with torch.no_grad():  # 该局部关闭梯度计算功能
+> >         for (x, y) in test_loader:  # 获取小批次的 x 与 y
+> >             Pred = model(x)  # 一次前向传播（小批量）
+> >             Pred[Pred >= 0.5] = 1
+> >             Pred[Pred < 0.5] = 0
+> >             correct += torch.sum((Pred == y))
+> >             total += y.size(0)
+> >     print(f'测试集精准度: {100 * correct / total} %')
+> > ```
+> > 
+> > <div align=center>
+> > <img src="./images/PyTorch_DNN_27.png"  style="zoom:100%"/>
+> > </div> 
+> > 
+>
+> 
+> 
+> <font color="yellow"> `MSEloss` 和 `BCEloss` 多次训练结果较为一致，测试集精准度皆为`75%`左右 </font>
+> 
+> 
+> 
+>
+> <font color="gree"> 注： </font>
+>
+> > 
+> > 由于此处 `Pred` 与 `Y` 是`二阶张量（64 x 1 的矩阵）`，每行长度只有`1`，因此 `correct` 行的结尾不需要加`.all(1)`
+> > 
+> > 当然加了也没问题，不会报错
+> > 
+> > Jupyter 测试一下
+> > 
+> > ```python
+> > # 测试网络
+> > correct = 0
+> > total = 0
+> > with torch.no_grad():  # 该局部关闭梯度计算功能
+> >     for (x, y) in test_loader:  # 获取小批次的 x 与 y
+> >         Pred = model(x)  # 一次前向传播（小批量）
+> >         Pred[Pred >= 0.5] = 1
+> >         Pred[Pred < 0.5] = 0
+> >         print(Pred.type(), y.type())   
+> >         print(Pred.shape, y.shape)
+> >         print((Pred == y).type(), (Pred == y).all(1).type())   
+> >         print((Pred == y).shape, (Pred == y).all(1).shape)     
+> >         correct += torch.sum((Pred == y).all(1))
+> >         total += y.size(0)
+> > print(f'测试集精准度: {100 * correct / total} %')
+> > ```
+> > 
+> > `Jupyter` 的 `Out [14]` 如下
+> > 
+> > ```c
+> > torch.cuda.FloatTensor torch.cuda.FloatTensor
+> > torch.Size([64, 1]) torch.Size([64, 1])
+> > torch.cuda.BoolTensor torch.cuda.BoolTensor
+> > torch.Size([64, 1]) torch.Size([64])
+> > torch.cuda.FloatTensor torch.cuda.FloatTensor
+> > torch.Size([64, 1]) torch.Size([64, 1])
+> > torch.cuda.BoolTensor torch.cuda.BoolTensor
+> > torch.Size([64, 1]) torch.Size([64])
+> > torch.cuda.FloatTensor torch.cuda.FloatTensor
+> > torch.Size([64, 1]) torch.Size([64, 1])
+> > torch.cuda.BoolTensor torch.cuda.BoolTensor
+> > torch.Size([64, 1]) torch.Size([64])
+> > torch.cuda.FloatTensor torch.cuda.FloatTensor
+> > torch.Size([36, 1]) torch.Size([36, 1])
+> > torch.cuda.BoolTensor torch.cuda.BoolTensor
+> > torch.Size([36, 1]) torch.Size([36])
+> > 测试集精准度: 71.92982482910156 %
+> > ```
+> > 
+> > 可以看出，`Pred` 和 `Y` 都是`二阶张量（64 x 1 的矩阵）`，`(Pred == Y)` 也是`二阶张量（64 x 1 的矩阵）`，所以可以进行`.all(1)`
+> > 
+> > 当然，只有 `每行长度超过1的矩阵`，进行`.all(1)`才有意义.
+> > 
+> > 虽然`长度64的向量`和 `64 x 1 的矩阵`所含信息相同，但是只有`矩阵`才能进行`.all(1)`运算.
+> 
+> 
+
+
+
+
+
+
+
+
+
+
+### 六、手写数字识别
+
+
+> 
+> `手写数字识别数据集（MNIST）`是机器学习领域的标准数据集，它被称为机器学习领域的“`Hello World`”，只因任何 `AI` 算法都可以用此标准数据集进行检验。
+> 
+> `MNIST` 内的每一个样本都是一副二维的灰度图像，如图 6-1 所示。
+> 
+> > <div align=center>
+> > <img src="./images/mNIST_1.png"  style="zoom:100%"/>
+> > </div> 
+> > 
+> 
+> 在 `MNIST` 中，模型的输入是一副图像，模型的输出就是一个与图像中对应的数字（`0` 至 `9` 之间的一个整数，不是独热编码）。
+> 
+> <font color="yellow"> 我们不用手动将输出转换为`one-hot`独热编码，`PyTorch` 会在整个过程中自动将数据集的输出转换为`one-hot`独热编码。只有在最后测试网络时，我们对比测试集的预测输出与真实输出时，才需要注意一下。 </font>
+> 
+> 某一个具体的样本如图 6-2 所示，每个图像都是形状为 $28 \times 28$ 的二维数
+> 
+> > <div align=center>
+> > <img src="./images/mNIST_2.png"  style="zoom:100%"/>
+> > </div> 
+> > 
+> 
+> <font color="yellow"> 在这种多分类问题中，神经网络的输出层需要一个 `softmax` 激活函数，它可以把输出层的数据归一化到 `0-1` 上，且加起来为 `1`，这样就模拟出了概率的意思。 </font>
+>
+> 
+> > 注： 
+> > 
+> > https://blog.csdn.net/z15692341130/article/details/104443650
+> > 
+> > `sigmoid`和`softmax`是神经网络输出层使用的激活函数，分别用于两类判别和多类判别。`binary cross-entropy`和`categorical cross-entropy`是相对应的损失函数。
+> > 
+> > `sigmoid`一般不用来做`多分类`，而是用来做`二分类`或者`多标签分类`,它是将一个标量数字转换到`[0,1]`之间，如果大于一个概率阈值(一般是0.5)，则认为属于某个类别，否则不属于某个类别。
+> > 
+> > `softmax`激活函数应用于`多分类`
+> > 
+> > `多分类`和 `多标签分类` 有什么区别？
+> > 
+> > 假设总共有8个分类，
+> > 
+> > * `多分类`最终只给出一种答案，要么是`类别2`、要么是`类别4`、要么是`类别7`。即`一个样本只有一个标签`。
+> > 
+> > * `多标签分类` 可以将样本判定为`类别2、类别4以及类别7`。即`一个样本具有多个标签`。
+> 
+> 
+
+
+
+
+
+
+#### 6.1 制作数据集
+
+
+> <font color="pink">这一章我们需要在 `torchvision` 库中分别下载训练集与测试集，因此需要从`torchvision` 库中导入 `datasets` 以下载数据集，下载前需要借助 `torchvision` 库中的 `transforms` 进行图像转换，将数据集变为张量，并调整数据集的统计分布。</font>
+> 
+> 由于不需要手动构建数据集，因此不导入 `utils` 中的 `Dataset`；又由于训练集与测试集是分开下载的，因此不导入 `utils` 中的 `random_split`。
+>
+> 
+> 
+> <font color="pink">1. 导入库</font>
+> 
+> > 新建 `test_ch6.ipynb`
+> > 
+> > `Jupyter Notebook` 代码块（2个）如下：
+> > 
+> > ```python
+> > import torch
+> > import torch.nn as nn
+> > from torch.utils.data import DataLoader
+> > from torchvision import transforms
+> > from torchvision import datasets
+> > import matplotlib.pyplot as plt
+> > %matplotlib inline
+> > ```
+> > 
+> > ```python
+> > # 展示高清图
+> > from matplotlib_inline import backend_inline
+> > backend_inline.set_matplotlib_formats('svg')
+> > ```
+> > 
+> > 
+> > 
+> > `Pycharm` 代码如下：
+> > 
+> > ```python
+> > import torch
+> > import torch.nn as nn
+> > from torch.utils.data import DataLoader
+> > from torchvision import transforms
+> > from torchvision import datasets
+> > import matplotlib.pyplot as plt
+> > from matplotlib_inline import backend_inline # 展示高清图
+> > 
+> > if __name__ == '__main__':
+> >     # 展示高清图
+> >     # 之前已导入库from matplotlib_inline import backend_inline
+> >     backend_inline.set_matplotlib_formats('svg')
+> > ```
+> 
+> 
+> 
+> <font color="pink">2. 导入数据集</font>
+>
+> > 
+> > 在下载数据集之前，要设定转换参数：`transform`，该参数里解决两个问题：
+> > 
+> > `ToTensor`：将图像数据转为张量，且调整三个维度的顺序为 `C*W*H`；`C`表示通道数，二维灰度图像的通道数为 `1`，三维 `RGB` 彩图的通道数为 `3`。
+> > 
+> > `Normalize`：将神经网络的输入数据转化为标准正态分布，训练更好；根据统计计算，`MNIST` 训练集所有像素的均值是 `0.1307`、标准差是 `0.3081`。
+> > 
+> > `Jupyter Notebook` 代码块如下：
+> > 
+> > ```python
+> > # 制作数据集
+> > # 数据集转换参数
+> > transform = transforms.Compose([
+> >     transforms.ToTensor(), 
+> >     transforms.Normalize(0.1307, 0.3081)
+> > ])
+> > # 下载训练集与测试集
+> > train_Data = datasets.MNIST(
+> >     root = 'D:/Jupyter/dataset/mnist/', # 下载路径
+> >     train = True, # 是 train 集
+> >     download = True, # 如果该路径没有该数据集，就下载
+> >     transform = transform # 数据集转换参数
+> > )
+> > test_Data = datasets.MNIST(
+> >     root = 'D:/Jupyter/dataset/mnist/', # 下载路径
+> >     train = False, # 是 test 集
+> >     download = True, # 如果该路径没有该数据集，就下载
+> >     transform = transform # 数据集转换参数
+> > )
+> > ```
+> > 
+> > `Pycharm` 代码如下：
+> > 
+> > ```python
+> > 
+> > ...
+> > 
+> > if __name__ == '__main__':
+> >     
+> >     ...
+> > 
+> >     # 制作数据集
+> >     # 数据集转换参数
+> >     transform = transforms.Compose([
+> >         transforms.ToTensor(),
+> >         transforms.Normalize(0.1307, 0.3081)
+> >     ])
+> >     # 下载训练集与测试集
+> >     train_Data = datasets.MNIST(
+> >         root='D:/Pycharm/Py_Projects/DNN/dataset/mnist/',  # 下载路径
+> >         train=True,  # 是 train 集
+> >         download=True,  # 如果该路径没有该数据集，就下载
+> >         transform=transform  # 数据集转换参数
+> >     )
+> >     test_Data = datasets.MNIST(
+> >         root='D:/Pycharm/Py_Projects/DNN/dataset/mnist/',  # 下载路径
+> >         train=False,  # 是 test 集
+> >         download=True,  # 如果该路径没有该数据集，就下载
+> >         transform=transform  # 数据集转换参数
+> >     )  
+> > ```
+> > 
+> > 
+> > <div align=center>
+> > <img src="./images/mNIST_3.png"  style="zoom:100%"/>
+> > </div> 
+> > 
+> 
+> 
+> <font color="pink">3. 批次加载器</font>
+> 
+> 
+> > `Jupyter Notebook` 代码块如下：
+> > 
+> > ```python
+> > # 批次加载器
+> > train_loader = DataLoader(dataset=train_Data, shuffle=True, batch_size=64)
+> > test_loader = DataLoader(dataset=test_Data, shuffle=False, batch_size=64)
+> > ```
+> > 
+> > `Pycharm` 代码如下：
+> > 
+> > ```python
+> > 
+> > ...
+> > 
+> > if __name__ == '__main__':
+> >     
+> >     ...
+> > 
+> >     # 批次加载器
+> >     train_loader = DataLoader(dataset=train_Data, shuffle=True, batch_size=64)
+> >     test_loader = DataLoader(dataset=test_Data, shuffle=False, batch_size=64)
+> > ```
+> > 
+>
+> 
+> 
+> 
+
+
+
+
+#### 6.2 搭建神经网络
+
+
+> 
+> 每个样本的输入都是形状为 $28 \times 28$ 的二维数组，那么对于 `DNN` 来说，输入层的神经元节点就要有 $28 \times 28 = 784$ 个；
+> 
+> 输出层使用`one-hot`独热编码，需要 `10` 个节点。
+> 
+> `Jupyter Notebook` 代码块（2个）如下：
+> > 
+> > ```python
+> > # 代码块1
+> > class DNN(nn.Module):
+> >     def __init__(self):
+> >         ''' 搭建神经网络各层 '''
+> >         super(DNN, self).__init__()
+> >         self.net = nn.Sequential(   # 按顺序搭建各层
+> >             nn.Flatten(),                    # 把图像铺平成一维
+> >             nn.Linear(784, 512), nn.ReLU(),  # 第 1 层：全连接层
+> >             nn.Linear(512, 256), nn.ReLU(),  # 第 2 层：全连接层
+> >             nn.Linear(256, 128), nn.ReLU(),  # 第 3 层：全连接层
+> >             nn.Linear(128, 64), nn.ReLU(),   # 第 4 层：全连接层
+> >             nn.Linear(64, 10)                # 第 5 层：全连接层
+> >         )
+> > 
+> >     def forward(self, x):
+> >         ''' 前向传播 '''
+> >         y = self.net(x)  # x 即输入数据, 这里的net和__init__()中的net要一致，自己起名
+> >         return y         # y 即输出数据
+> > ```
+> > ```python
+> > # 代码块2
+> > model = DNN().to('cuda:0') # 创建子类的实例，并搬到 GPU 上
+> > model # 查看该实例的各层
+> > ```
+> > 
+> 
+> `Pycharm` 代码如下：
+> 
+> > 
+> > ```python
+> > # 搭建神经网络
+> > class DNN(nn.Module):
+> >     def __init__(self):
+> >         ''' 搭建神经网络各层 '''
+> >         super(DNN, self).__init__()
+> >         self.net = nn.Sequential(   # 按顺序搭建各层
+> >             nn.Flatten(),                    # 把图像铺平成一维
+> >             nn.Linear(784, 512), nn.ReLU(),  # 第 1 层：全连接层
+> >             nn.Linear(512, 256), nn.ReLU(),  # 第 2 层：全连接层
+> >             nn.Linear(256, 128), nn.ReLU(),  # 第 3 层：全连接层
+> >             nn.Linear(128, 64), nn.ReLU(),   # 第 4 层：全连接层
+> >             nn.Linear(64, 10)                # 第 5 层：全连接层
+> >         )
+> > 
+> >     def forward(self, x):
+> >         ''' 前向传播 '''
+> >         y = self.net(x)  # x 即输入数据, 这里的net和__init__()中的net要一致，自己起名
+> >         return y         # y 即输出数据
+> > 
+> > 
+> > if __name__ == '__main__':
+> > 
+> >     ...
+> > 
+> >     model = DNN().to('cuda:0')  # 创建子类的实例，并搬到 GPU 上
+> >     print(model)                # 查看该实例的各层
+> > ```
+> > 
+>
+> 
+> > 
+> > `Jupyter` 的 `Out [7]` 如下
+> > 
+> > ```c
+> > DNN(
+> >   (net): Sequential(
+> >     (0): Flatten(start_dim=1, end_dim=-1)
+> >     (1): Linear(in_features=784, out_features=512, bias=True)
+> >     (2): ReLU()
+> >     (3): Linear(in_features=512, out_features=256, bias=True)
+> >     (4): ReLU()
+> >     (5): Linear(in_features=256, out_features=128, bias=True)
+> >     (6): ReLU()
+> >     (7): Linear(in_features=128, out_features=64, bias=True)
+> >     (8): ReLU()
+> >     (9): Linear(in_features=64, out_features=10, bias=True)
+> >   )
+> > )
+> > ```
+> > 
+> 
+> 
+
+
+
+
+
+
+#### 6.3 训练网络
+
+
+>
+> <font color="gree"> 使用`nn.CrossEntropyLoss()`的代码如下 </font>
+> 
+> > 
+> > `Jupyter Notebook` 代码块（3个）如下：
+> > 
+> > ```python
+> > # 损失函数的选择
+> > # loss_fn = nn.MSELoss()  
+> > # loss_fn = nn.BCELoss(reduction='mean')
+> > loss_fn = nn.CrossEntropyLoss() # 自带 softmax 激活函数
+> > ```
+> > ```python
+> > # 优化算法的选择
+> > learning_rate = 0.01 # 设置学习率
+> > optimizer = torch.optim.SGD(
+> >     model.parameters(),
+> >     lr = learning_rate,
+> >     momentum = 0.5   
+> > )
+> > # 给优化器了一个新参数 momentum（动量），
+> > # 它使梯度下降算法有了力与惯性，该方法给人的感觉就像是小球在地面上滚动一样。
+> > ```
+> > 
+> > <font color="yellow"> 注意，由于数据集内部进不去，只能在循环的过程中取出一部分样本，就立即将之搬到 GPU 上。 </font>
+> > 
+> > ```python
+> > # 训练网络
+> > epochs = 5
+> > losses = [] # 记录损失函数变化的列表
+> > 
+> > for epoch in range(epochs):
+> >     for (x, y) in train_loader: # 获取小批次的 x 与 y
+> >         # 由于数据集内部进不去，只能在循环的过程中取出一部分样本，就立即将之搬到 GPU 上。
+> >         x, y = x.to('cuda:0'), y.to('cuda:0')
+> >         Pred = model(x) # 一次前向传播（小批量）
+> >         loss = loss_fn(Pred, y) # 计算损失函数
+> >         losses.append(loss.item()) # 记录损失函数的变化
+> >         optimizer.zero_grad() # 清理上一轮滞留的梯度
+> >         loss.backward() # 一次反向传播
+> >         optimizer.step() # 优化内部参数
+> >         
+> > Fig = plt.figure()
+> > plt.plot(range(len(losses)), losses)
+> > plt.show()
+> > ```
+> > 
+>
+> 
+> 
+> > 
+> > `Pycharm` 代码如下：
+> > 
+> > ```python
+> > 
+> > ...
+> > 
+> > if __name__ == '__main__':
+> > 
+> >     ...
+> > 
+> >     # 损失函数的选择
+> >     # loss_fn = nn.MSELoss()
+> >     # loss_fn = nn.BCELoss(reduction='mean')
+> >     loss_fn = nn.CrossEntropyLoss()  # 自带 softmax 激活函数
+> > 
+> >     # 优化算法的选择
+> >     learning_rate = 0.01  # 设置学习率
+> >     optimizer = torch.optim.SGD(
+> >         model.parameters(),
+> >         lr=learning_rate,
+> >         momentum=0.5
+> >     )
+> >     # 给优化器了一个新参数 momentum（动量），
+> >     # 它使梯度下降算法有了力与惯性，该方法给人的感觉就像是小球在地面上滚动一样。
+> > 
+> >     # 训练网络
+> >     epochs = 5
+> >     losses = []  # 记录损失函数变化的列表
+> > 
+> >     for epoch in range(epochs):
+> >         for (x, y) in train_loader:  # 获取小批次的 x 与 y
+> >             # 由于数据集内部进不去，只能在循环的过程中取出一部分样本，就立即将之搬到 GPU 上。
+> >             x, y = x.to('cuda:0'), y.to('cuda:0')
+> >             Pred = model(x)  # 一次前向传播（小批量）
+> >             loss = loss_fn(Pred, y)  # 计算损失函数
+> >             losses.append(loss.item())  # 记录损失函数的变化
+> >             optimizer.zero_grad()  # 清理上一轮滞留的梯度
+> >             loss.backward()  # 一次反向传播
+> >             optimizer.step()  # 优化内部参数
+> > 
+> >     Fig = plt.figure()
+> >     plt.plot(range(len(losses)), losses)
+> >     plt.show()
+> > ```
+> > 
+>
+> 
+> > <div align=center>
+> > <img src="./images/mNIST_4.png"  style="zoom:100%"/>
+> > </div> 
+> > 
+> 
+> 
+> 
+
+
+
+
+
+
+
+#### 6.4 测试网络
+
+> 
+> 代码如下
+> 
+> > 
+> > `Jupyter Notebook` 代码块如下：
+> > 
+> > ```python
+> > # 测试网络
+> > correct = 0
+> > total = 0
+> > with torch.no_grad(): # 该局部关闭梯度计算功能
+> >     for (x, y) in test_loader: # 获取小批次的 x 与 y
+> >         # 由于数据集内部进不去，只能在循环的过程中取出一部分样本，就立即将之搬到 GPU 上。
+> >         x, y = x.to('cuda:0'), y.to('cuda:0')
+> >         Pred = model(x) # 一次前向传播（小批量）
+> >         _, predicted = torch.max(Pred.data, dim=1)
+> >         correct += torch.sum( (predicted == y) )
+> >         total += y.size(0) 
+> > print(f'测试集精准度: {100*correct/total} %')
+> > ```
+> 
+> > 
+> > `Pycharm` 代码如下：
+> > 
+> > ```python
+> > 
+> > ...
+> > 
+> > if __name__ == '__main__':
+> > 
+> >     ...
+> > 
+> >     # 测试网络
+> >     correct = 0
+> >     total = 0
+> >     with torch.no_grad():  # 该局部关闭梯度计算功能
+> >         for (x, y) in test_loader:  # 获取小批次的 x 与 y
+> >             # 由于数据集内部进不去，只能在循环的过程中取出一部分样本，就立即将之搬到 GPU 上。
+> >             x, y = x.to('cuda:0'), y.to('cuda:0')
+> >             Pred = model(x)  # 一次前向传播（小批量）
+> >             _, predicted = torch.max(Pred.data, dim=1)
+> >             correct += torch.sum((predicted == y))
+> >             total += y.size(0)
+> >     print(f'测试集精准度: {100 * correct / total} %')
+> > ```
+> > 
+> 
+> > <div align=center>
+> > <img src="./images/mNIST_5.png"  style="zoom:100%"/>
+> > </div> 
+> > 
+> 
+> <font color="yellow"> 
+> 
+> `a, b = torch.max(Pred.data, dim=1)`的意思是，找出 `Pred` 每一行里的最大值，数值赋给 `a`，所处位置赋给 `b`。因此上述代码里的 `predicted` 就相当于把独热编码转换回了普通的阿拉伯数字，这样一来可以直接与 `y` 进行比较
+>
+> </font>
+> 
+> 
+>
+> <font color="gree"> 注： </font>
+>
+> > 
+> > 按理说此处 `predicted` 与 `y` 是`二阶张量（? x 1 的矩阵）`，因此 `correct` 行的结尾不需要加`.all(1)`
+> > 
+> > 但是加了应该也没问题啊，为什么这里会报错？
+> > 
+> > Jupyter 测试一下
+> > 
+> > ```python
+> > # 测试网络
+> > correct = 0
+> > total = 0
+> > with torch.no_grad(): # 该局部关闭梯度计算功能
+> >     for (x, y) in test_loader: # 获取小批次的 x 与 y
+> >         x, y = x.to('cuda:0'), y.to('cuda:0')   
+> >         Pred = model(x) # 一次前向传播（小批量）
+> >         print(Pred.type(), y.type())  
+> >         print(Pred.shape, y.shape)       
+> >         _, predicted = torch.max(Pred.data, dim=1)
+> >         print(predicted.type(), y.type())  
+> >         print(predicted.shape, y.shape)      
+> >         print((predicted == y).all(1).type())   
+> >         print((predicted == y).all(1).shape)    
+> >         correct += torch.sum( (predicted == y) )
+> >         total += y.size(0) 
+> > print(f'测试集精准度: {100*correct/total} %')
+> > ```
+> > 
+> > `Jupyter` 的 `Out [11]` 如下
+> > 
+> > ```c
+> > torch.cuda.FloatTensor torch.cuda.LongTensor
+> > torch.Size([32, 10]) torch.Size([32])
+> > torch.cuda.LongTensor torch.cuda.LongTensor
+> > torch.Size([32]) torch.Size([32])
+> > ---------------------------------------------------------------------------
+> > IndexError                                Traceback (most recent call last)
+> > Cell In[14], line 13
+> >      11 print(predicted.type(), y.type())  
+> >      12 print(predicted.shape, y.shape)      
+> > ---> 13 print((predicted == y).all(1).type())   
+> >      14 print((predicted == y).all(1).shape)    
+> >      15 correct += torch.sum( (predicted == y) )
+> > 
+> > IndexError: Dimension out of range (expected to be in range of [-1, 0], but got 1)
+> > ```
+> > 
+> > <div align=center>
+> > <img src="./images/mNIST_6.png"  style="zoom:100%"/>
+> > </div> 
+> > 
+> > 可以看出，`predicted` 和 `y` 都是`一阶张量（向量）`，`(Pred == Y)` 也是`一阶张量（向量）`，并不是`二阶张量（矩阵）`， 所以不能`.all(1)`
+> > 
+> > 虽然`长度32的向量`和 `32 x 1 的矩阵`所含信息相同，但是只有矩阵才能进行`.all(1)`运算.
+> > 
+> 
+> 
 
 
 
