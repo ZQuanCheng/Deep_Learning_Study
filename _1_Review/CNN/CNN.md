@@ -1389,7 +1389,7 @@
 > > ```
 > > 
 >
-> <font color="yellow"> 这次训练要较长时间10分钟，之前都是几分钟 </font>
+> <font color="yellow"> 这次训练要较长时间15分钟，之前都是几分钟 </font>
 > 
 > 
 > > <div align=center>
