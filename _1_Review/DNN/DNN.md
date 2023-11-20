@@ -2517,7 +2517,7 @@ Activations`，即可查看 `torch` 内置的所有非线性激活函数（以�
 > `MNIST` 内的每一个样本都是一副二维的灰度图像，如图 6-1 所示。
 > 
 > > <div align=center>
-> > <img src="./images/mNIST_1.png"  style="zoom:100%"/>
+> > <img src="./images/MNIST_1.png"  style="zoom:100%"/>
 > > </div> 
 > > 
 > 
@@ -2528,7 +2528,7 @@ Activations`，即可查看 `torch` 内置的所有非线性激活函数（以�
 > 某一个具体的样本如图 6-2 所示，每个图像都是形状为 $28 \times 28$ 的二维数
 > 
 > > <div align=center>
-> > <img src="./images/mNIST_2.png"  style="zoom:100%"/>
+> > <img src="./images/MNIST_2.png"  style="zoom:100%"/>
 > > </div> 
 > > 
 > 
@@ -2678,7 +2678,7 @@ Activations`，即可查看 `torch` 内置的所有非线性激活函数（以�
 > > 
 > > 
 > > <div align=center>
-> > <img src="./images/mNIST_3.png"  style="zoom:100%"/>
+> > <img src="./images/MNIST_3.png"  style="zoom:100%"/>
 > > </div> 
 > > 
 > 
@@ -2810,7 +2810,43 @@ Activations`，即可查看 `torch` 内置的所有非线性激活函数（以�
 > > 
 > 
 > 
-
+>
+> <font color="gree">为什么输出层并没有使用 `softmax` 激活函数？</font>
+> 
+> > 因为后续使用的 `交叉熵损失函数 nn.CrossEntropyLoss()`, 自带 `softmax` 激活函数
+> > 
+> > 
+> > ```python
+> > # 损失函数的选择
+> > loss_fn = nn.CrossEntropyLoss() # 自带 softmax 激活函数
+> > ```
+> > 
+> > <font color="yellow">如果输出层用了`nn.Softmax(dim=1)`，且损失函数不变，就相当于输出层用了`两层复合softmax函数`，会影响测试集准确率, 降低了`10% ~ 20%`。</font>
+> > 
+> > https://pytorch.org/docs/1.12/generated/torch.nn.Softmax.html#torch.nn.Softmax
+> > 
+> > ```python
+> > # 搭建神经网络
+> > class DNN(nn.Module):
+> >     def __init__(self):
+> >         ''' 搭建神经网络各层 '''
+> >         super(DNN, self).__init__()
+> >         self.net = nn.Sequential(   # 按顺序搭建各层
+> >             nn.Flatten(),                    # 把图像铺平成一维
+> >             nn.Linear(784, 512), nn.ReLU(),  # 第 1 层：全连接层
+> >             nn.Linear(512, 256), nn.ReLU(),  # 第 2 层：全连接层
+> >             nn.Linear(256, 128), nn.ReLU(),  # 第 3 层：全连接层
+> >             nn.Linear(128, 64), nn.ReLU(),   # 第 4 层：全连接层
+> >             nn.Linear(64, 10), nn.Softmax(dim=1)   # 第 5 层：全连接层
+> >         )
+> > 
+> >         ...
+> > ```
+> > 
+>
+> 
+> 
+> 
 
 
 
@@ -2918,7 +2954,7 @@ Activations`，即可查看 `torch` 内置的所有非线性激活函数（以�
 >
 > 
 > > <div align=center>
-> > <img src="./images/mNIST_4.png"  style="zoom:100%"/>
+> > <img src="./images/MNIST_4.png"  style="zoom:100%"/>
 > > </div> 
 > > 
 > 
@@ -2981,19 +3017,66 @@ Activations`，即可查看 `torch` 内置的所有非线性激活函数（以�
 > > 
 > 
 > > <div align=center>
-> > <img src="./images/mNIST_5.png"  style="zoom:100%"/>
+> > <img src="./images/MNIST_5.png"  style="zoom:100%"/>
 > > </div> 
 > > 
 > 
-> <font color="yellow"> 
 > 
-> `a, b = torch.max(Pred.data, dim=1)`的意思是，找出 `Pred` 每一行里的最大值，数值赋给 `a`，所处位置赋给 `b`。因此上述代码里的 `predicted` 就相当于把独热编码转换回了普通的阿拉伯数字，这样一来可以直接与 `y` 进行比较
+> <font color="gree"> 注1： </font>
 >
-> </font>
+> > 
+> > <font color="yellow"> 
+> > 
+> > 我们不用手动将输出转换为`one-hot`独热编码，`PyTorch` 会在整个过程中自动将数据集的输出转换为`one-hot`独热编码。只有在最后测试网络时，我们对比测试集的预测输出与真实输出时，才需要注意一下。 
+> > 
+> > `a, b = torch.max(Pred.data, dim=1)`的意思是，找出 `Pred` 每一行里的最大值，数值赋给 `a`，所处位置赋给 `b`。因此上述代码里的 `predicted` 就相当于把独热编码转换回了普通的阿拉伯数字，这样一来可以直接与 `y` 进行比较
+> > 
+> > </font>
+> > 
+> > ```python
+> > output = torch.max(input, dim)
+> > 
+> > 输入
+> > input是softmax函数输出的一个tensor
+> > dim是max函数索引的维度0/1，0是每列的最大值，1是每行的最大值
+> > 
+> > 输出
+> > 函数会返回两个tensor，
+> > 第一个tensor是每行的最大值，softmax的输出中最大的是1，所以第一个tensor是全1的tensor；
+> > 第二个tensor是每行最大值的索引。
+> > ```
+> > 
+> > 我们看一下具体的`Pred[0], predicted[0], y[0]`三个变量的值
+> > 
+> > ```python
+> > # 测试网络
+> > correct = 0
+> > total = 0
+> > with torch.no_grad(): # 该局部关闭梯度计算功能
+> >     for (x, y) in test_loader: # 获取小批次的 x 与 y
+> >         x, y = x.to('cuda:0'), y.to('cuda:0')
+> >         Pred = model(x) # 一次前向传播（小批量）  
+> >         _, predicted = torch.max(Pred.data, dim=1)
+> >         print(Pred.shape, predicted.shape, y.shape) 
+> >         print(Pred[0]) 
+> >         print(predicted[0])  
+> >         print(y[0])  
+> >         print("\n" "\n" "\n")          
+> >         correct += torch.sum( (predicted == y) )
+> >         total += y.size(0) 
+> > print(f'测试集精准度: {100*correct/total} %')
+> > ```
+> > 
+> > <div align=center>
+> > <img src="./images/MNIST_6.png"  style="zoom:100%"/>
+> > </div> 
+> > 
+> > `Pred[0]`中输出值最大是`第7个节点（位置索引：0-9）`，对应`数字7（数字范围：0-9）`, 所以`predicted[0]`的值为`7`
+> > 
 > 
 > 
 >
-> <font color="gree"> 注： </font>
+> <font color="gree"> 注2： </font>
 >
 > > 
 > > 按理说此处 `predicted` 与 `y` 是`二阶张量（? x 1 的矩阵）`，因此 `correct` 行的结尾不需要加`.all(1)`
@@ -3042,7 +3125,7 @@ Activations`，即可查看 `torch` 内置的所有非线性激活函数（以�
 > > ```
 > > 
 > > <div align=center>
-> > <img src="./images/mNIST_6.png"  style="zoom:100%"/>
+> > <img src="./images/MNIST_7.png"  style="zoom:100%"/>
 > > </div> 
 > > 
 > > 可以看出，`predicted` 和 `y` 都是`一阶张量（向量）`，`(Pred == Y)` 也是`一阶张量（向量）`，并不是`二阶张量（矩阵）`， 所以不能`.all(1)`
