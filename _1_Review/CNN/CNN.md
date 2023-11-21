@@ -1693,7 +1693,7 @@
 > 
 > 输出层使用`one-hot`独热编码，需要 `10` 个节点。
 > 
-> `Jupyter Notebook` 代码块（3个）如下：
+> `Jupyter Notebook` 代码块（4个）如下：
 > 
 > > ```python
 > > # 一个 Inception 块
@@ -1820,7 +1820,7 @@
 >
 > 
 > > 
-> > `Jupyter` 的 `Out [6]` 如下
+> > `Jupyter` 的 `Out [7]` 如下
 > > 
 > > ```c
 > > Conv2d output shape: 	 torch.Size([1, 10, 24, 24])
@@ -2004,24 +2004,495 @@
 > 
 
 
+
+
+
 ### 五、ResNet
 
 #### 5.1 网络结构
 
 > 
+> `残差网络（Residual Network，ResNet）`荣获 2015 年的 `ImageNet` 图像分类竞赛冠军，其可以缓解深度神经网络中增加深度带来的“梯度消失”问题。
+> 
+> 在反向传播计算梯度时，梯度是不断相乘的，假如训练到后期，各层的梯度均小于 `1`，则其相乘起来就会不断趋于 `0`。因此，深度学习的隐藏层并非越多越好，隐藏层越深，梯度越趋于 `0`，此之谓“梯度消失”。
+> 
+> 而残差块将某模块的输入 `x` 引到输出 `y` 处，使原本的梯度 `dy/dx` 变成了`(dy + dx) / dx`，也即`(dy / dx+1)`，这样一来梯度就不会消失了。
+> 
+> 
+> > <div align=center>
+> > <img src="./images/ResNet_1.png"  style="zoom:100%"/>
+> > </div> 
 > 
 > 
 > 
+
+
+
+
+#### 5.2 制作数据集
+
+
+> 
+> 
+> <font color="pink">1. 导入库</font>
+> 
+> > 新建 `test_ch2.ipynb`
+> > 
+> > `Jupyter Notebook` 代码块（2个）如下：
+> > 
+> > ```python
+> > import torch
+> > import torch.nn as nn
+> > from torch.utils.data import DataLoader
+> > from torchvision import transforms
+> > from torchvision import datasets
+> > import matplotlib.pyplot as plt
+> > %matplotlib inline
+> > ```
+> > 
+> > ```python
+> > # 展示高清图
+> > from matplotlib_inline import backend_inline
+> > backend_inline.set_matplotlib_formats('svg')
+> > ```
+> > 
+> > 
+> > 
+> > `Pycharm` 代码如下：
+> > 
+> > ```python
+> > import torch
+> > import torch.nn as nn
+> > from torch.utils.data import DataLoader
+> > from torchvision import transforms
+> > from torchvision import datasets
+> > import matplotlib.pyplot as plt
+> > from matplotlib_inline import backend_inline # 展示高清图
+> > 
+> > if __name__ == '__main__':
+> >     # 展示高清图
+> >     # 之前已导入库from matplotlib_inline import backend_inline
+> >     backend_inline.set_matplotlib_formats('svg')
+> > ```
 > 
 > 
 > 
+> <font color="pink">2. 导入数据集</font>
+>
+> > 
+> > 在下载数据集之前，要设定转换参数：`transform`，该参数里解决两个问题：
+> > 
+> > `ToTensor`：将图像数据转为张量，且调整三个维度的顺序为 `C*W*H`；`C`表示通道数，二维灰度图像的通道数为 `1`，三维 `RGB` 彩图的通道数为 `3`。
+> > 
+> > `Normalize`：将神经网络的输入数据转化为标准正态分布，训练更好；根据统计计算，`MNIST` 训练集所有像素的均值是 `0.1307`、标准差是 `0.3081`。
+> > 
+> > `Jupyter Notebook` 代码块如下：
+> > 
+> > ```python
+> > # 制作数据集
+> > # 数据集转换参数
+> > transform = transforms.Compose([
+> >     transforms.ToTensor(), 
+> >     transforms.Normalize(0.1307, 0.3081)
+> > ])
+> > # 下载训练集与测试集
+> > train_Data = datasets.MNIST(
+> >     root = 'D:/Jupyter/dataset/mnist/', # 下载路径
+> >     train = True, # 是 train 集
+> >     download = True, # 如果该路径没有该数据集，就下载
+> >     transform = transform # 数据集转换参数
+> > )
+> > test_Data = datasets.MNIST(
+> >     root = 'D:/Jupyter/dataset/mnist/', # 下载路径
+> >     train = False, # 是 test 集
+> >     download = True, # 如果该路径没有该数据集，就下载
+> >     transform = transform # 数据集转换参数
+> > )
+> > ```
+> > 
+> > `Pycharm` 代码如下：
+> > 
+> > ```python
+> > 
+> > ...
+> > 
+> > if __name__ == '__main__':
+> >     
+> >     ...
+> > 
+> >     # 制作数据集
+> >     # 数据集转换参数
+> >     transform = transforms.Compose([
+> >         transforms.ToTensor(),
+> >         transforms.Resize(224),
+> >         transforms.Normalize(0.1307, 0.3081)
+> >     ])
+> >     # 下载训练集与测试集
+> >     train_Data = datasets.MNIST(
+> >         root='D:/Pycharm/Py_Projects/DNN/dataset/mnist/',  # 下载路径
+> >         train=True,  # 是 train 集
+> >         download=True,  # 如果该路径没有该数据集，就下载
+> >         transform=transform  # 数据集转换参数
+> >     )
+> >     test_Data = datasets.MNIST(
+> >         root='D:/Pycharm/Py_Projects/DNN/dataset/mnist/',  # 下载路径
+> >         train=False,  # 是 test 集
+> >         download=True,  # 如果该路径没有该数据集，就下载
+> >         transform=transform  # 数据集转换参数
+> >     )  
+> > ```
+> > 
+> 
+> <font color="pink">3. 批次加载器</font>
+> 
+> 
+> > `Jupyter Notebook` 代码块如下：
+> > 
+> > ```python
+> > # 批次加载器
+> > train_loader = DataLoader(dataset=train_Data, shuffle=True, batch_size=128)
+> > test_loader = DataLoader(dataset=test_Data, shuffle=False, batch_size=128)
+> > ```
+> > 
+> > `Pycharm` 代码如下：
+> > 
+> > ```python
+> > 
+> > ...
+> > 
+> > if __name__ == '__main__':
+> >     
+> >     ...
+> > 
+> >     # 批次加载器
+> >     train_loader = DataLoader(dataset=train_Data, shuffle=True, batch_size=128)
+> >     test_loader = DataLoader(dataset=test_Data, shuffle=False, batch_size=128)
+> > ```
+> > 
+>
 > 
 > 
 > 
+
+
+
+
+
+
+#### 5.3 搭建神经网络
+
+
+> 
+> > <div align=center>
+> > <img src="./images/ResNet_2.png"  style="zoom:100%"/>
+> > <img src="./images/ResNet_3.png"  style="zoom:100%"/>
+> > </div> 
+> 
+> 
+> `Jupyter Notebook` 代码块（4个）如下：
+> 
+> > ```python
+> > # 残差块
+> > class ResidualBlock(nn.Module):
+> >     def __init__(self, channels):
+> >         super(ResidualBlock, self).__init__()
+> >         self.net = nn.Sequential(
+> >             nn.Conv2d(channels, channels, kernel_size=3, padding=1),
+> >             nn.ReLU(),
+> >             nn.Conv2d(channels, channels, kernel_size=3, padding=1),
+> >         )
+> >     def forward(self, x):
+> >         y = self.net(x)
+> >         return nn.functional.relu(x+y)
+> > ```
+> > 
+> > ```python
+> > # 搭建神经网络
+> > class CNN(nn.Module):
+> >         def __init__(self):
+> >             super(CNN, self).__init__()
+> >             self.net = nn.Sequential(
+> >                 nn.Conv2d(1, 16, kernel_size=5), nn.ReLU(),
+> >                 nn.MaxPool2d(2), ResidualBlock(16),
+> >                 nn.Conv2d(16, 32, kernel_size=5), nn.ReLU(),
+> >                 nn.MaxPool2d(2), ResidualBlock(32),
+> >                 nn.Flatten(),
+> >                 nn.Linear(512, 10)
+> >             )
+> > 
+> >         def forward(self, x):
+> >             y = self.net(x)
+> >             return y
+> > ```
+> > 
+> > 
+> > ```python
+> > # 查看网络结构
+> > X = torch.rand(size= (1, 1, 28, 28))
+> > for layer in CNN().net:
+> >     X = layer(X)
+> >     print( layer.__class__.__name__, 'output shape: \t', X.shape )
+> > ```
+> > 
+> > ```python
+> > # 创建子类的实例，并搬到 GPU 上
+> > model = CNN().to('cuda:0') 
+> > ```
+> > 
+> 
+> `Pycharm` 代码如下：
+> 
+> > 
+> > ```python
+> > # 残差块
+> > class ResidualBlock(nn.Module):
+> >     def __init__(self, channels):
+> >         super(ResidualBlock, self).__init__()
+> >         self.net = nn.Sequential(
+> >             nn.Conv2d(channels, channels, kernel_size=3, padding=1),
+> >             nn.ReLU(),
+> >             nn.Conv2d(channels, channels, kernel_size=3, padding=1),
+> >         )
+> >     def forward(self, x):
+> >         y = self.net(x)
+> >         return nn.functional.relu(x+y)
+> > 
+> > # 搭建神经网络
+> > class CNN(nn.Module):
+> >         def __init__(self):
+> >             super(CNN, self).__init__()
+> >             self.net = nn.Sequential(
+> >                 nn.Conv2d(1, 16, kernel_size=5), nn.ReLU(),
+> >                 nn.MaxPool2d(2), ResidualBlock(16),
+> >                 nn.Conv2d(16, 32, kernel_size=5), nn.ReLU(),
+> >                 nn.MaxPool2d(2), ResidualBlock(32),
+> >                 nn.Flatten(),
+> >                 nn.Linear(512, 10)
+> >             )
+> > 
+> >         def forward(self, x):
+> >             y = self.net(x)
+> >             return y
+> >  
+> >  
+> > if __name__ == '__main__':
+> > 
+> >     ...
+> > 
+> > # 查看网络结构
+> > X = torch.rand(size= (1, 1, 28, 28))
+> > for layer in CNN().net:
+> >     X = layer(X)
+> >     print( layer.__class__.__name__, 'output shape: \t', X.shape )
+> > 
+> > # 创建子类的实例，并搬到 GPU 上
+> > model = CNN().to('cuda:0') 
+> > ```
+> > 
+> 
+> 
+> > 
+> > `Jupyter` 的 `Out [7]` 如下
+> > 
+> > ```c
+> > Conv2d output shape: 	 torch.Size([1, 16, 24, 24])
+> > ReLU output shape: 	 torch.Size([1, 16, 24, 24])
+> > MaxPool2d output shape: 	 torch.Size([1, 16, 12, 12])
+> > ResidualBlock output shape: 	 torch.Size([1, 16, 12, 12])
+> > Conv2d output shape: 	 torch.Size([1, 32, 8, 8])
+> > ReLU output shape: 	 torch.Size([1, 32, 8, 8])
+> > MaxPool2d output shape: 	 torch.Size([1, 32, 4, 4])
+> > ResidualBlock output shape: 	 torch.Size([1, 32, 4, 4])
+> > Flatten output shape: 	 torch.Size([1, 512])
+> > Linear output shape: 	 torch.Size([1, 10])
+> > ```
+> > 
 > 
 > 
 > 
+
+
+
+
+
+
+
+
+
+
+
+#### 5.4 训练网络
+
+
+>
+> <font color="gree"> 使用`nn.CrossEntropyLoss()`的代码如下 </font>
 > 
+> > 
+> > `Jupyter Notebook` 代码块（3个）如下：
+> > 
+> > ```python
+> > # 损失函数的选择
+> > loss_fn = nn.CrossEntropyLoss() # 自带 softmax 激活函数
+> > ```
+> > ```python
+> > # 优化算法的选择
+> > learning_rate = 0.1 # 设置学习率
+> > optimizer = torch.optim.SGD(
+> >     model.parameters(),
+> >     lr = learning_rate, 
+> > )
+> > ```
+> > 
+> > <font color="yellow"> 注意，由于数据集内部进不去，只能在循环的过程中取出一部分样本，就立即将之搬到 GPU 上。 </font>
+> > 
+> > ```python
+> > # 训练网络
+> > epochs = 10
+> > losses = [] # 记录损失函数变化的列表
+> > 
+> > for epoch in range(epochs):
+> >     for (x, y) in train_loader: # 获取小批次的 x 与 y
+> >         # 由于数据集内部进不去，只能在循环的过程中取出一部分样本，就立即将之搬到 GPU 上。
+> >         x, y = x.to('cuda:0'), y.to('cuda:0')
+> >         Pred = model(x) # 一次前向传播（小批量）
+> >         loss = loss_fn(Pred, y) # 计算损失函数
+> >         losses.append(loss.item()) # 记录损失函数的变化
+> >         optimizer.zero_grad() # 清理上一轮滞留的梯度
+> >         loss.backward() # 一次反向传播
+> >         optimizer.step() # 优化内部参数
+> >         
+> > Fig = plt.figure()
+> > plt.plot(range(len(losses)), losses)
+> > plt.show()
+> > ```
+> > 
+>
+> 
+> 
+> > 
+> > `Pycharm` 代码如下：
+> > 
+> > ```python
+> > 
+> > ...
+> > 
+> > if __name__ == '__main__':
+> > 
+> >     ...
+> > 
+> >     # 损失函数的选择
+> >     loss_fn = nn.CrossEntropyLoss()  # 自带 softmax 激活函数
+> > 
+> >     # 优化算法的选择
+> >     learning_rate = 0.1  # 设置学习率
+> >     optimizer = torch.optim.SGD(
+> >         model.parameters(),
+> >         lr=learning_rate,
+> >     )
+> > 
+> >     # 训练网络
+> >     epochs = 10
+> >     losses = []  # 记录损失函数变化的列表
+> > 
+> >     for epoch in range(epochs):
+> >         for (x, y) in train_loader:  # 获取小批次的 x 与 y
+> >             # 由于数据集内部进不去，只能在循环的过程中取出一部分样本，就立即将之搬到 GPU 上。
+> >             x, y = x.to('cuda:0'), y.to('cuda:0')
+> >             Pred = model(x)  # 一次前向传播（小批量）
+> >             loss = loss_fn(Pred, y)  # 计算损失函数
+> >             losses.append(loss.item())  # 记录损失函数的变化
+> >             optimizer.zero_grad()  # 清理上一轮滞留的梯度
+> >             loss.backward()  # 一次反向传播
+> >             optimizer.step()  # 优化内部参数
+> > 
+> >     Fig = plt.figure()
+> >     plt.plot(range(len(losses)), losses)
+> >     plt.show()
+> > ```
+> > 
+>
+> 
+> > <div align=center>
+> > <img src="./images/ResNet_4.png"  style="zoom:100%"/>
+> > </div> 
+> 
+> 
+>
+> 
+
+
+
+#### 5.5 测试网络
+
+> 
+> 代码如下
+> 
+> > 
+> > `Jupyter Notebook` 代码块如下：
+> > 
+> > ```python
+> > # 测试网络
+> > correct = 0
+> > total = 0
+> > with torch.no_grad(): # 该局部关闭梯度计算功能
+> >     for (x, y) in test_loader: # 获取小批次的 x 与 y
+> >         # 由于数据集内部进不去，只能在循环的过程中取出一部分样本，就立即将之搬到 GPU 上。
+> >         x, y = x.to('cuda:0'), y.to('cuda:0')
+> >         Pred = model(x) # 一次前向传播（小批量）
+> >         _, predicted = torch.max(Pred.data, dim=1)
+> >         correct += torch.sum( (predicted == y) )
+> >         total += y.size(0) 
+> > print(f'测试集精准度: {100*correct/total} %')
+> > ```
+> 
+> > 
+> > `Pycharm` 代码如下：
+> > 
+> > ```python
+> > 
+> > ...
+> > 
+> > if __name__ == '__main__':
+> > 
+> >     ...
+> > 
+> >     # 测试网络
+> >     correct = 0
+> >     total = 0
+> >     with torch.no_grad():  # 该局部关闭梯度计算功能
+> >         for (x, y) in test_loader:  # 获取小批次的 x 与 y
+> >             # 由于数据集内部进不去，只能在循环的过程中取出一部分样本，就立即将之搬到 GPU 上。
+> >             x, y = x.to('cuda:0'), y.to('cuda:0')
+> >             Pred = model(x)  # 一次前向传播（小批量）
+> >             _, predicted = torch.max(Pred.data, dim=1)
+> >             correct += torch.sum((predicted == y))
+> >             total += y.size(0)
+> >     print(f'测试集精准度: {100 * correct / total} %')
+> > ```
+> > 
+> 
+> 
+> > <div align=center>
+> > <img src="./images/ResNet_5.png"  style="zoom:100%"/>
+> > </div> 
+> 
+> 
+> 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
