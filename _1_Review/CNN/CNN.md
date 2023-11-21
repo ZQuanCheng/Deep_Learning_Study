@@ -394,7 +394,7 @@
 > 
 > <font color="gree"> 2：`PyTorch`的`nn.Dropout()`的参数 </font>
 >
-> > <font color="yellow"> 即随机删除一些全连接层神经元之间的"连接线" </font>
+> > <font color="yellow"> 即随机删除一些全连接层神经元之间的"连接线"， 随机概率可以自行设置 </font>
 > > 
 > > https://pytorch.org/docs/stable/generated/torch.nn.Dropout.html
 > > 
