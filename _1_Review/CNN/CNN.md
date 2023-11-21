@@ -292,7 +292,7 @@
 
 > 
 > 
-> <font color="pink"> 1. 卷积层 </font>
+> <font color="pink"> 1. 卷积层/滤波器 </font>
 > 
 > > 现假设卷积层的填充为 `P`，步幅为 `S`，由
 > > 
@@ -323,6 +323,19 @@
 > > <img src="./images/CNN_17.png"  style="zoom:100%"/>
 > > </div> 
 > >  
+>
+> 
+> 
+> <font color="gree"> 上述字母的含义如下 </font>
+> 
+> > `F` 指的是 `Filter` 滤波器
+> > `P` 指的是 `Padding` 填充
+> > `S` 指的是 `Stride` 步幅
+> > `C` 指的是 `Channel` 通道
+> > `H` 指的是 `Height` 高度
+> > `W` 指的是 `Width` 宽度
+> > `O` 指的是 `Out` 输出
+> 
 > 
 > 
 
