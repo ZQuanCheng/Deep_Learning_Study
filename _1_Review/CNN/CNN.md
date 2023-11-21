@@ -393,7 +393,9 @@
 >
 > 
 > <font color="gree"> 2：`PyTorch`的`nn.Dropout()`的参数 </font>
-> 
+>
+> > <font color="yellow"> 即随机删除一些全连接层神经元之间的"连接线" </font>
+> > 
 > > https://pytorch.org/docs/stable/generated/torch.nn.Dropout.html
 > > 
 > > `PyTorch`中的`nn.Dropout`是一个用于实现`dropout正则化`的层，`旨在减少神经网络在训练期间的过拟合`。这个层`随机将输入张量中的一部分元素置为零`。
@@ -410,7 +412,9 @@
 > > <img src="./images/PyTorch_CNN_3.png"  style="zoom:100%"/>
 > > </div> 
 > > 
-> 
+> > 
+> > 
+>
 > 
 
 
