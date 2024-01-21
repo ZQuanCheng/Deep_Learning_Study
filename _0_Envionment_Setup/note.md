@@ -301,7 +301,7 @@
 > > conda list
 > > 
 > > # 安装 NumPy 库，并指定版本 1.21.5
-> > pip install numpy==1.21.5 -i https://pypi.tuna.tsinghua.edu.cn/simpl
+> > pip install numpy==1.21.5 -i https://pypi.tuna.tsinghua.edu.cn/simple
 > > 
 > > # 安装 Pandas 库，并指定版本 1.2.4
 > > pip install Pandas==1.2.4 -i https://pypi.tuna.tsinghua.edu.cn/simple
@@ -316,7 +316,7 @@
 > > conda deactivate
 > > ```
 > > 
->
+>e 
 > 
 > 
 
@@ -503,8 +503,6 @@
 > > 
 > 
 > 
-
-
 
 
 
